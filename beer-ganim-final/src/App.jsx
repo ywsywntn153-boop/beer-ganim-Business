@@ -131,63 +131,63 @@ function OpenBadge({ hours }) {
   const s = getOpenStatus(hours);
   if (!s) return null;
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:4, background:s==="open"?"#dcfce7":"#fee2e2", color:s==="open"?"#16a34a":"#dc2626", fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20 }}>
-      <span style={{ width:6, height:6, borderRadius:"50%", background:s==="open"?"#16a34a":"#dc2626", display:"inline-block" }}/>
-      {s==="open"?"פתוח":"סגור"}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: s === "open" ? "#dcfce7" : "#fee2e2", color: s === "open" ? "#16a34a" : "#dc2626", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s === "open" ? "#16a34a" : "#dc2626", display: "inline-block" }} />
+      {s === "open" ? "פתוח" : "סגור"}
     </span>
   );
 }
 
 function Card({ biz, idx, expanded, onToggle, mounted }) {
-  const cs = CATEGORIES[biz.cat] || {emoji:"🏢",color:"#c4651a",bg:"#fdf0e0"};
-  
+  const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
+
   return (
-    <div className={`card fa ${mounted?"vis":""}`} style={{transitionDelay:`${idx*35}ms`,borderTop:`3px solid ${cs.color}`}} onClick={onToggle}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7}}>
-        <div style={{flex:1}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:4,background:cs.bg,color:cs.color,padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:700,marginBottom:5}}>
+    <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${idx * 35}ms`, borderTop: `3px solid ${cs.color}` }} onClick={onToggle}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: cs.bg, color: cs.color, padding: "2px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
             {cs.emoji} {biz.cat}
           </div>
-          <h3 style={{fontSize:15,fontWeight:800,color:"#1a0e06",lineHeight:1.3}}>{biz.name}</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1a0e06", lineHeight: 1.3 }}>{biz.name}</h3>
         </div>
-        <span style={{fontSize:16,color:"#c4a97d",transition:"transform .28s",transform:expanded?"rotate(180deg)":"rotate(0)",flexShrink:0,marginTop:2}}>▾</span>
+        <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginTop: 2 }}>▾</span>
       </div>
 
-      <p style={{fontSize:13,color:"#6b5030",marginBottom:9,lineHeight:1.55}}>{biz.desc}</p>
+      <p style={{ fontSize: 13, color: "#6b5030", marginBottom: 9, lineHeight: 1.55 }}>{biz.desc}</p>
 
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-        <OpenBadge hours={biz.hours}/>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <OpenBadge hours={biz.hours} />
       </div>
 
-      <div className="dr" style={{borderTop:"1px solid #f0e8d8"}}>
-        <span style={{fontSize:15,flexShrink:0}}>📞</span>
+      <div className="dr" style={{ borderTop: "1px solid #f0e8d8" }}>
+        <span style={{ fontSize: 15, flexShrink: 0 }}>📞</span>
         {biz.tel
-          ? <a href={`tel:${biz.tel}`} onClick={e=>e.stopPropagation()} style={{color:"#1d4ed8",textDecoration:"none",fontWeight:700,fontSize:15}}>{biz.tel}</a>
-          : <span style={{color:"#b09070",fontSize:13,fontStyle:"italic"}}>לחץ לפרטים</span>
+          ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a>
+          : <span style={{ color: "#b09070", fontSize: 13, fontStyle: "italic" }}>לחץ לפרטים</span>
         }
       </div>
 
       {expanded && (
         <div className="ex">
-          {biz.addr && biz.addr!=="באר גנים" && (
-            <div className="dr"><span style={{fontSize:15}}>📍</span><span style={{color:"#4a3218"}}>{biz.addr}</span></div>
+          {biz.addr && biz.addr !== "באר גנים" && (
+            <div className="dr"><span style={{ fontSize: 15 }}>📍</span><span style={{ color: "#4a3218" }}>{biz.addr}</span></div>
           )}
           {biz.hours && (
-            <div className="dr"><span style={{fontSize:15}}>🕐</span><span style={{color:"#4a3218",lineHeight:1.55}}>{biz.hours}</span></div>
+            <div className="dr"><span style={{ fontSize: 15 }}>🕐</span><span style={{ color: "#4a3218", lineHeight: 1.55 }}>{biz.hours}</span></div>
           )}
-          <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:13}}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 13 }}>
             {biz.tel && (
               <>
-                <a href={`tel:${biz.tel}`} className="ab p" onClick={e=>e.stopPropagation()}>📞 התקשר</a>
-                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g,"").replace(/^0/,"")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#16a34a",borderColor:"#bbf7d0"}}>💬 וואטסאפ</a>
+                <a href={`tel:${biz.tel}`} className="ab p" onClick={e => e.stopPropagation()}>📞 התקשר</a>
+                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g, "").replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#16a34a", borderColor: "#bbf7d0" }}>💬 וואטסאפ</a>
               </>
             )}
-            {biz.site && <a href={biz.site.startsWith("http")?biz.site:"https://"+biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#7c3aed",borderColor:"#ddd6fe"}}>🌐 אתר</a>}
+            {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
             {biz.ig && biz.ig.startsWith("http") && (
-              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#e1306c",borderColor:"#fbcfe8"}}>📷 אינסטגרם</a>
+              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>
             )}
             {biz.fb && biz.fb.startsWith("http") && (
-              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#1877f2",borderColor:"#bfdbfe"}}>📘 פייסבוק</a>
+              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>
             )}
           </div>
         </div>
@@ -201,26 +201,26 @@ export default function App() {
   const [activeCat, setActiveCat] = useState("הכל");
   const [expandedId, setExpandedId] = useState(null);
   const [mounted, setMounted] = useState(false);
-  useEffect(()=>{ setTimeout(()=>setMounted(true),60); },[]);
+  useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
 
-  const filtered = useMemo(()=>{
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return BUSINESSES.filter(b=>{
-      const m = !q || b.name.toLowerCase().includes(q)||b.desc.toLowerCase().includes(q)||b.addr.toLowerCase().includes(q)||b.cat.toLowerCase().includes(q);
-      return m && (activeCat==="הכל"||b.cat===activeCat);
+    return BUSINESSES.filter(b => {
+      const m = !q || b.name.toLowerCase().includes(q) || b.desc.toLowerCase().includes(q) || b.addr.toLowerCase().includes(q) || b.cat.toLowerCase().includes(q);
+      return m && (activeCat === "הכל" || b.cat === activeCat);
     });
-  },[search,activeCat]);
+  }, [search, activeCat]);
 
-  const counts = useMemo(()=>{
-    const c={};
-    BUSINESSES.forEach(b=>{c[b.cat]=(c[b.cat]||0)+1;});
+  const counts = useMemo(() => {
+    const c = {};
+    BUSINESSES.forEach(b => { c[b.cat] = (c[b.cat] || 0) + 1; });
     return c;
-  },[]);
+  }, []);
 
   const waFloat = "0559139013";
 
   return (
-    <div style={{fontFamily:"'Heebo',sans-serif",direction:"rtl",minHeight:"100vh",background:"#f7f3ed",color:"#1e140a"}}>
+    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f7f3ed", color: "#1e140a" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
@@ -248,53 +248,53 @@ export default function App() {
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
-      <header style={{background:"linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)",padding:"32px 20px 42px",textAlign:"center",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(ellipse at 15% 60%,rgba(196,101,26,.22) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(232,162,78,.13) 0%,transparent 50%)"}}/>
-        <div style={{position:"relative",zIndex:1}}>
-          <div style={{fontSize:38,marginBottom:7,filter:"drop-shadow(0 2px 8px rgba(0,0,0,.35))"}}>🌿</div>
-          <h1 style={{fontSize:"clamp(28px,8vw,50px)",fontWeight:900,color:"#f5e6cc",lineHeight:1.05,letterSpacing:"-1px"}}>עסקים בבאר גנים</h1>
-          <p style={{color:"#c4a97d",fontSize:14,marginTop:9,fontWeight:300}}>{BUSINESSES.length} עסקים ושירותים מקומיים</p>
+      <header style={{ background: "linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)", padding: "32px 20px 42px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 15% 60%,rgba(196,101,26,.22) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(232,162,78,.13) 0%,transparent 50%)" }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 38, marginBottom: 7 }}>🌿</div>
+          <h1 style={{ fontSize: "clamp(28px,8vw,50px)", fontWeight: 900, color: "#f5e6cc", lineHeight: 1.05, letterSpacing: "-1px" }}>עסקים בבאר גנים</h1>
+          <p style={{ color: "#c4a97d", fontSize: 14, marginTop: 9, fontWeight: 300 }}>{BUSINESSES.length} עסקים ושירותים מקומיים</p>
         </div>
       </header>
 
-      <div style={{position:"sticky",top:0,zIndex:100,background:"rgba(247,243,237,.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #ecdfc8",padding:"13px 16px 9px"}}>
-        <div style={{position:"relative",maxWidth:520,margin:"0 auto 10px"}}>
-          <span style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",fontSize:17,pointerEvents:"none"}}>🔍</span>
-          <input className="si" type="text" placeholder="חפש עסק, שירות, שם..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(247,243,237,.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #ecdfc8", padding: "13px 16px 9px" }}>
+        <div style={{ position: "relative", maxWidth: 520, margin: "0 auto 10px" }}>
+          <span style={{ position: "absolute", left: 15, top: "50%", transform: "translateY(-50%)", fontSize: 17, pointerEvents: "none" }}>🔍</span>
+          <input className="si" type="text" placeholder="חפש עסק, שירות, שם..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:2,scrollbarWidth:"none"}}>
-          <button className={`cc ${activeCat==="הכל"?"act":""}`} onClick={()=>setActiveCat("הכל")}>🏘️ הכל ({BUSINESSES.length})</button>
-          {Object.entries(CATEGORIES).map(([c,{emoji}])=>counts[c]?(
-            <button key={c} className={`cc ${activeCat===c?"act":""}`} onClick={()=>setActiveCat(c)}>{emoji} {c} ({counts[c]})</button>
-          ):null)}
+        <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+          <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({BUSINESSES.length})</button>
+          {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
+            <button key={c} className={`cc ${activeCat === c ? "act" : ""}`} onClick={() => setActiveCat(c)}>{emoji} {c} ({counts[c]})</button>
+          ) : null)}
         </div>
       </div>
 
-      <main style={{maxWidth:960,margin:"0 auto",padding:"15px 14px 80px"}}>
-        {filtered.length===0
-          ? <div style={{textAlign:"center",padding:"64px 20px",color:"#b09070"}}><div style={{fontSize:48}}>🔍</div><p style={{fontSize:18,fontWeight:700,marginTop:12}}>לא נמצאו תוצאות</p></div>
-          : <div className="grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(285px,1fr))",gap:13}}>
-              {filtered.map((biz,i)=>(
-                <Card key={biz.id} biz={biz} idx={i} expanded={expandedId===biz.id} onToggle={()=>setExpandedId(expandedId===biz.id?null:biz.id)} mounted={mounted}/>
-              ))}
-            </div>
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: "15px 14px 80px" }}>
+        {filtered.length === 0
+          ? <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות</p></div>
+          : <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(285px,1fr))", gap: 13 }}>
+            {filtered.map((biz, i) => (
+              <Card key={biz.id} biz={biz} idx={i} expanded={expandedId === biz.id} onToggle={() => setExpandedId(expandedId === biz.id ? null : biz.id)} mounted={mounted} />
+            ))}
+          </div>
         }
       </main>
 
-      <footer style={{textAlign:"center",padding:"20px",color:"#b09070",fontSize:13,borderTop:"1px solid #ecdfc8",background:"#ede7da"}}>
-        <p style={{fontWeight:700,color:"#6b4c2a"}}>עסקים בבאר גנים</p>
-        <p style={{marginTop:6}}>לעדכונים והוספת עסק: <a href="tel:0559139013" style={{color:"#c4651a",fontWeight:700,textDecoration:"none"}}>055-913-9013</a></p>
-        <div style={{marginTop:12,fontSize:13,color:"#8a6a4a"}}>
+      <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 13, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
+        <p style={{ fontWeight: 700, color: "#6b4c2a" }}>עסקים בבאר גנים</p>
+        <p style={{ marginTop: 6 }}>לעדכונים והוספת עסק: <a href="tel:0559139013" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "none" }}>055-913-9013</a></p>
+        <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>
           🏪 בעל עסק? מעוניין לעדכן פרטים או להסיר את העסק מהרשימה?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, אני בעל עסק ואני מעוניין לעדכן/להסיר את העסק שלי מהרשימה" target="_blank" rel="noreferrer" style={{color:"#c4651a",fontWeight:700,textDecoration:"underline"}}>לחץ כאן לשליחת הודעה</a>
+          <a href="https://wa.me/9720559139013?text=שלום, אני בעל עסק ואני מעוניין לעדכן/להסיר את העסק שלי מהרשימה" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>לחץ כאן לשליחת הודעה</a>
         </div>
-        <div style={{marginTop:14,fontSize:11,color:"#aaa",maxWidth:480,margin:"14px auto 0",lineHeight:1.6,padding:"10px 14px",background:"#f5ede0",borderRadius:10}}>
+        <div style={{ marginTop: 14, fontSize: 11, color: "#aaa", maxWidth: 480, margin: "14px auto 0", lineHeight: 1.6, padding: "10px 14px", background: "#f5ede0", borderRadius: 10 }}>
           המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
         </div>
       </footer>
 
-      <a href={`https://wa.me/972${waFloat.replace(/^0/,"")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
-      
+      <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
+
       <Analytics />
     </div>
   );
