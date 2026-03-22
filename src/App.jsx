@@ -205,8 +205,14 @@ export default function App() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return BUSINESSES.filter(b => {
+      // קודם כל בודק אם זה מתאים לחיפוש הטקסטואלי
       const m = !q || b.name.toLowerCase().includes(q) || b.desc.toLowerCase().includes(q) || b.addr.toLowerCase().includes(q) || b.cat.toLowerCase().includes(q);
-      return m && (activeCat === "הכל" || b.cat === activeCat);
+      if (!m) return false;
+
+      // בדיקת קטגוריות וסינון "פתוח עכשיו"
+      if (activeCat === "הכל") return true;
+      if (activeCat === "פתוח עכשיו") return getOpenStatus(b.hours) === "open";
+      return b.cat === activeCat;
     });
   }, [search, activeCat]);
 
@@ -229,6 +235,8 @@ export default function App() {
         .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #e8d5b7;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#7a5c3a;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
         .cc:hover{border-color:#c4651a;color:#c4651a}
         .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
+        .cc.open-now { border-color: #16a34a; color: #16a34a; }
+        .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
         .card{background:#fff;border-radius:18px;padding:18px;border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
@@ -263,6 +271,12 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({BUSINESSES.length})</button>
+          
+          {/* כפתור הפתוח עכשיו */}
+          <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>
+            🟢 פתוח עכשיו
+          </button>
+
           {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
             <button key={c} className={`cc ${activeCat === c ? "act" : ""}`} onClick={() => setActiveCat(c)}>{emoji} {c} ({counts[c]})</button>
           ) : null)}
@@ -271,7 +285,7 @@ export default function App() {
 
       <main style={{ maxWidth: 960, margin: "0 auto", padding: "15px 14px 80px" }}>
         {filtered.length === 0
-          ? <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות</p></div>
+          ? <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות לפילטר שבחרת</p></div>
           : <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(285px,1fr))", gap: 13 }}>
             {filtered.map((biz, i) => (
               <Card key={biz.id} biz={biz} idx={i} expanded={expandedId === biz.id} onToggle={() => setExpandedId(expandedId === biz.id ? null : biz.id)} mounted={mounted} />
