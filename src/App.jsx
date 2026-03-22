@@ -260,7 +260,6 @@ function AddListingForm({ onAdd, onClose }) {
   const [images, setImages] = useState([]);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // מנגנון חכם לכיווץ התמונות כדי שהאחסון בדפדפן לא יקרוס
   const handleImages = (e) => {
     const files = Array.from(e.target.files).slice(0, 2);
     files.forEach(file => {
@@ -273,7 +272,7 @@ function AddListingForm({ onAdd, onClose }) {
           if (width > 600) { height = Math.round(height * 600 / width); width = 600; }
           canvas.width = width; canvas.height = height;
           canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7); // דחיסה כדי לשמור מקום
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
           setImages(prev => prev.length < 2 ? [...prev, dataUrl] : prev);
         };
         img.src = ev.target.result;
@@ -283,11 +282,10 @@ function AddListingForm({ onAdd, onClose }) {
   };
 
   const submit = () => {
-    const digitsOnly = form.tel.replace(/[^0-9]/g, "");
     if (!form.title.trim()) return alert("חובה למלא כותרת למודעה!");
-    if (digitsOnly.length !== 10) return alert("מספר טלפון חייב להכיל בדיוק 10 ספרות, למשל 0501234567");
+    if (form.tel.length !== 10) return alert("מספר טלפון חייב להכיל בדיוק 10 ספרות (לדוגמה: 0501234567)");
     
-    onAdd({...form, tel: digitsOnly, images, id: Date.now(), date: new Date().toLocaleDateString("he-IL")});
+    onAdd({...form, images, id: Date.now(), date: new Date().toLocaleDateString("he-IL")});
     onClose();
   };
 
@@ -310,8 +308,7 @@ function AddListingForm({ onAdd, onClose }) {
         </select>
         {form.type === "מכירה" && <input style={inp} placeholder="מחיר (₪)" type="number" value={form.price} onChange={e => set("price", e.target.value)} />}
         
-        {/* שדה טלפון חכם שמאפשר רק מספרים */}
-        <input style={inp} placeholder="מספר טלפון (10 ספרות) *" value={form.tel} onChange={e => set("tel", e.target.value.replace(/[^0-9]/g, ''))} type="tel" maxLength="10" />
+        <input style={inp} placeholder="מספר טלפון (10 ספרות) *" value={form.tel} onChange={e => set("tel", e.target.value.replace(/[^0-9]/g, ''))} type="tel" maxLength={10} />
         
         <textarea style={{ ...inp, minHeight: 70 }} placeholder="תיאור קצר..." value={form.desc} onChange={e => set("desc", e.target.value)} />
         
@@ -351,7 +348,7 @@ export default function App() {
     try {
       localStorage.setItem("beer_ganim_listings", JSON.stringify(listings));
     } catch (e) {
-      console.error("Storage full, could not save listing.");
+      console.error("Storage full");
     }
   }, [listings]);
   
@@ -362,6 +359,7 @@ export default function App() {
     return BUSINESSES.filter(b => {
       const m = !q || b.name.toLowerCase().includes(q) || b.desc.toLowerCase().includes(q) || b.addr.toLowerCase().includes(q) || b.cat.toLowerCase().includes(q);
       if (!m) return false;
+
       if (activeCat === "הכל") return true;
       if (activeCat === "פתוח עכשיו") return getOpenStatus(b.hours) === "open";
       return b.cat === activeCat;
@@ -385,42 +383,31 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        
         .si{width:100%;padding:13px 18px 13px 46px;border:2px solid #e8d5b7;border-radius:50px;font-size:16px;font-family:'Heebo',sans-serif;background:#fff;outline:none;transition:all .25s;color:#1e140a;direction:rtl}
         .si:focus{border-color:#c4651a;box-shadow:0 0 0 3px rgba(196,101,26,.13)}
         .si::placeholder{color:#b09070}
-        
         .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #e8d5b7;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#7a5c3a;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
         .cc:hover{border-color:#c4651a;color:#c4651a}
         .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
         .cc.open-now { border-color: #16a34a; color: #16a34a; }
         .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
-        
         .card{background:#fff;border-radius:18px;padding:18px;border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
-        
         .ab{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
         .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
         .ab.o{background:#fff;border:2px solid #e8d5b7;color:#555}
         .ab.o:hover{border-color:#c4651a;background:#fff9f4}
-        
         .dr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:1px solid #f5ede0;font-size:13px}
-        
         .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
         .fa.vis{opacity:1;transform:translateY(0)}
-        
-        .ex{animation:fu .22s ease}
         @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-        
+        .ex{animation:fu .22s ease}
         .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
         .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
-        
         @media(max-width:600px){.grid{grid-template-columns:1fr!important}}
-        
         .hide-scroll::-webkit-scrollbar { display: none !important; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .top-tab { flex: 1; text-align: center; padding: 12px; font-family: 'Heebo', sans-serif; font-size: 16px; font-weight: 800; border: none; cursor: pointer; background: transparent; color: #9a7a55; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .top-tab.active { color: #1a0e06; border-bottom: 3px solid #c4651a; }
       `}</style>
@@ -430,7 +417,7 @@ export default function App() {
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ fontSize: 38, marginBottom: 7 }}>🌿</div>
           <h1 style={{ fontSize: "clamp(28px,8vw,50px)", fontWeight: 900, color: "#f5e6cc", lineHeight: 1.05, letterSpacing: "-1px" }}>עסקים בבאר גנים</h1>
-          <p style={{ color: "#c4a97d", fontSize: 14, marginTop: 9, fontWeight: 300 }}>הכל במקום אחד, קרוב לבית</p>
+          <p style={{ color: "#c4a97d", fontSize: 14, marginTop: 9, fontWeight: 300 }}>{BUSINESSES.length} עסקים ושירותים מקומיים</p>
         </div>
       </header>
 
