@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next"
 import { useState, useMemo, useEffect } from "react";
 
 const CATEGORIES = {
@@ -328,12 +329,17 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
                 <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g,"").replace(/^0/,"")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#16a34a",borderColor:"#bbf7d0"}}>💬 וואטסאפ</a>
               </>
             )}
-            {biz.site && <a href={biz.site.startsWith("http")?biz.site:"https://"+biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#7c3aed",borderColor:"#ddd6fe"}}>🌐 אתר</a>}
-            {biz.ig && biz.ig.startsWith("http") && <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#e1306c",borderColor:"#fbcfe8"}}>📷 אינסטגרם</a>}
-            {biz.fb && biz.fb.startsWith("http") && <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#1877f2",borderColor:"#bfdbfe"}}>📘 פייסבוק</a>}
+            {biz.fb && biz.fb.startsWith("http") && (
+              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#1877f2",borderColor:"#bfdbfe"}}>📘 פייסבוק</a>
+            )}
           </div>
         </div>
       )}
     </div>
-  );
+    
+    <Analytics /> {/* <--- הוספתי את זה כאן, רגע לפני סוף האתר */}
+  </div>
+);
 }
+
+export default App;
