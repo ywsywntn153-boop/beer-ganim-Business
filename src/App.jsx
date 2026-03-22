@@ -260,13 +260,35 @@ function AddListingForm({ onAdd, onClose }) {
   const [images, setImages] = useState([]);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  // מנגנון חכם לכיווץ התמונות כדי שהאחסון בדפדפן לא יקרוס
   const handleImages = (e) => {
     const files = Array.from(e.target.files).slice(0, 2);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = ev => setImages(prev => prev.length < 2 ? [...prev, ev.target.result] : prev);
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > 600) { height = Math.round(height * 600 / width); width = 600; }
+          canvas.width = width; canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.7); // דחיסה כדי לשמור מקום
+          setImages(prev => prev.length < 2 ? [...prev, dataUrl] : prev);
+        };
+        img.src = ev.target.result;
+      };
       reader.readAsDataURL(file);
     });
+  };
+
+  const submit = () => {
+    const digitsOnly = form.tel.replace(/[^0-9]/g, "");
+    if (!form.title.trim()) return alert("חובה למלא כותרת למודעה!");
+    if (digitsOnly.length !== 10) return alert("מספר טלפון חייב להכיל בדיוק 10 ספרות, למשל 0501234567");
+    
+    onAdd({...form, tel: digitsOnly, images, id: Date.now(), date: new Date().toLocaleDateString("he-IL")});
+    onClose();
   };
 
   const inp = { width: "100%", padding: "12px 14px", border: "2px solid #e8d5b7", borderRadius: 12, marginBottom: 10, fontFamily: "'Heebo',sans-serif", fontSize: 14, outline: "none" };
@@ -287,7 +309,10 @@ function AddListingForm({ onAdd, onClose }) {
           {MARKET_CATS.map(c => <option key={c}>{c}</option>)}
         </select>
         {form.type === "מכירה" && <input style={inp} placeholder="מחיר (₪)" type="number" value={form.price} onChange={e => set("price", e.target.value)} />}
-        <input style={inp} placeholder="מספר טלפון *" value={form.tel} onChange={e => set("tel", e.target.value)} type="tel" />
+        
+        {/* שדה טלפון חכם שמאפשר רק מספרים */}
+        <input style={inp} placeholder="מספר טלפון (10 ספרות) *" value={form.tel} onChange={e => set("tel", e.target.value.replace(/[^0-9]/g, ''))} type="tel" maxLength="10" />
+        
         <textarea style={{ ...inp, minHeight: 70 }} placeholder="תיאור קצר..." value={form.desc} onChange={e => set("desc", e.target.value)} />
         
         <div style={{ marginBottom: 14 }}>
@@ -296,7 +321,7 @@ function AddListingForm({ onAdd, onClose }) {
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => { if(!form.title || !form.tel) return alert("חובה למלא כותרת וטלפון"); onAdd({...form, images, id: Date.now(), date: new Date().toLocaleDateString("he-IL")}); onClose(); }} style={{ flex: 1, padding: "13px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: 14, fontFamily:"'Heebo',sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>פרסם</button>
+          <button onClick={submit} style={{ flex: 1, padding: "13px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: 14, fontFamily:"'Heebo',sans-serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>פרסם</button>
           <button onClick={onClose} style={{ padding: "13px 18px", background: "#f5ede0", color: "#7a5c3a", border: "none", borderRadius: 14, fontFamily:"'Heebo',sans-serif", fontWeight: 600, cursor: "pointer" }}>ביטול</button>
         </div>
       </div>
@@ -305,7 +330,7 @@ function AddListingForm({ onAdd, onClose }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState("businesses"); // "businesses" או "market"
+  const [tab, setTab] = useState("businesses");
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("הכל");
   const [marketCat, setMarketCat] = useState("הכל");
@@ -313,9 +338,22 @@ export default function App() {
   const [mounted, setMounted] = useState(false);
   const [showForm, setShowForm] = useState(false);
   
-  // טעינה ושמירה של הלוח
-  const [listings, setListings] = useState(() => JSON.parse(localStorage.getItem("beer_ganim_listings") || "[]"));
-  useEffect(() => { localStorage.setItem("beer_ganim_listings", JSON.stringify(listings)); }, [listings]);
+  const [listings, setListings] = useState(() => {
+    try {
+      const saved = localStorage.getItem("beer_ganim_listings");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("beer_ganim_listings", JSON.stringify(listings));
+    } catch (e) {
+      console.error("Storage full, could not save listing.");
+    }
+  }, [listings]);
   
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
 
@@ -380,16 +418,13 @@ export default function App() {
         
         @media(max-width:600px){.grid{grid-template-columns:1fr!important}}
         
-        /* 🔥 הפתרון לבעיית פס הגלילה המכוער 🔥 */
         .hide-scroll::-webkit-scrollbar { display: none !important; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* עיצוב כפתורי הניווט (שוק / עסקים) שמשתלב מושלם עם הרקע */
         .top-tab { flex: 1; text-align: center; padding: 12px; font-family: 'Heebo', sans-serif; font-size: 16px; font-weight: 800; border: none; cursor: pointer; background: transparent; color: #9a7a55; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .top-tab.active { color: #1a0e06; border-bottom: 3px solid #c4651a; }
       `}</style>
 
-      {/* HEADER המקורי והיפה */}
       <header style={{ background: "linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)", padding: "32px 20px 42px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 15% 60%,rgba(196,101,26,.22) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(232,162,78,.13) 0%,transparent 50%)" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
@@ -399,7 +434,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* ניווט בין עסקים לשוק - נקי ואלגנטי */}
       <div style={{ display: "flex", maxWidth: 960, margin: "0 auto", borderBottom: "1px solid #ecdfc8", background: "#f7f3ed" }}>
          <button className={`top-tab ${tab === 'businesses' ? 'active' : ''}`} onClick={() => setTab('businesses')}>🏪 עסקים ושירותים</button>
          <button className={`top-tab ${tab === 'market' ? 'active' : ''}`} onClick={() => setTab('market')}>🛒 שוק יישובי</button>
@@ -413,7 +447,6 @@ export default function App() {
               <input className="si" type="text" placeholder="חפש עסק, שירות, שם..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             
-            {/* כאן הוספנו את ה-hide-scroll כדי להעלים את פס הגלילה */}
             <div className="hide-scroll" style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2 }}>
               <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({BUSINESSES.length})</button>
               
@@ -447,7 +480,6 @@ export default function App() {
                 <button onClick={() => setShowForm(true)} className="ab p" style={{ fontSize: 14 }}>➕ פרסם מודעה</button>
              </div>
              
-             {/* גם כאן פס הגלילה יוסתר */}
              <div className="hide-scroll" style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 8, marginBottom: 15 }}>
                 {["הכל", "מכירה", "מתנה בחינם", ...MARKET_CATS].map(c => (
                   <button key={c} className={`cc ${marketCat===c?"act":""}`} onClick={() => setMarketCat(c)}>{c}</button>
@@ -469,7 +501,6 @@ export default function App() {
          </main>
       )}
 
-      {/* הפוטר שלך נשאר בדיוק אותו דבר */}
       <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 14, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
         <p style={{ fontWeight: 700, color: "#6b4c2a", fontSize: 16 }}>עסקים בבאר גנים</p>
         
