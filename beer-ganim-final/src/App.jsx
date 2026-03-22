@@ -41,7 +41,7 @@ const BUSINESSES = [
   { id: 18, name: "אורנית – איפור כלות וערב",   cat: "יופי וטיפוח",    tel: "054-5236804",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://instagram.com/oranit.tastas", fb: "", desc: "מאפרת כלות ואירועי ערב" },
   { id: 19, name: "טלינקה – איפור ושיער כלות",  cat: "יופי וטיפוח",    tel: "050-6525573",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "איפור ועיצוב שיער לכלות ואירועי ערב" },
   { id: 20, name: "סטיילינג טיפולי – אורית ברגר", cat: "יופי וטיפוח", tel: "054-5953953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סטיילינג וטיפולי סנדאות" },
-  { id: 73, name: "Rotem Tsaidi - Beauty clinic", cat: "יופי וטיפוח", tel: "054-236-9892", hours: "א׳–ו׳ בתיאום מראש | שבת סגור", addr: "רותם המדבר 11, באר גנים", site: "", ig: "https://www.instagram.com/rotem_beauty_clinic?igsh=aDFleTNycW1vc29u", fb: "", desc: "קליניקה לטיפוח ויופי" },
+  { id: 73, name: "Rotem Tsaidi - Beauty clinic", cat: "יופי וטיפוח", tel: "054-236-9892", hours: "א׳–ו׳ בתיאום מראש | שבת סגור", addr: "רותם המדבר 11, באר גנים", site: "", ig: "https://www.instagram.com/rotem_beauty_clinic?igsh=aDFleTNycW1vc29u", fb: "", desc: "קליניקה לטיפוח ויופי מקצועית" },
   { id: 21, name: "פרחי אושר",                  cat: "קניות ושירותים", tel: "054-6671953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חנות פרחים – זרים, עיצובים ומתנות" },
 
   // ═══ בריאות ורפואה ═══
@@ -131,9 +131,9 @@ function OpenBadge({ hours }) {
   const s = getOpenStatus(hours);
   if (!s) return null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: s === "open" ? "#dcfce7" : "#fee2e2", color: s === "open" ? "#16a34a" : "#dc2626", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s === "open" ? "#16a34a" : "#dc2626", display: "inline-block" }} />
-      {s === "open" ? "פתוח" : "סגור"}
+    <span style={{ display:"inline-flex", alignItems:"center", gap:4, background:s==="open"?"#dcfce7":"#fee2e2", color:s==="open"?"#16a34a":"#dc2626", fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20 }}>
+      <span style={{ width:6, height:6, borderRadius:"50%", background:s==="open"?"#16a34a":"#dc2626", display:"inline-block" }}/>
+      {s==="open"?"פתוח":"סגור"}
     </span>
   );
 }
@@ -183,7 +183,7 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
               </>
             )}
             {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
-            {biz.ig && biz.ig.startsWith("http") && (
+            {biz.ig && (
               <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>
             )}
             {biz.fb && biz.fb.startsWith("http") && (
