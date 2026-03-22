@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from "react";
-import { Analytics } from "@vercel/analytics/react";
 
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -131,9 +130,9 @@ function OpenBadge({ hours }) {
   const s = getOpenStatus(hours);
   if (!s) return null;
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:4, background:s==="open"?"#dcfce7":"#fee2e2", color:s==="open"?"#16a34a":"#dc2626", fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20 }}>
-      <span style={{ width:6, height:6, borderRadius:"50%", background:s==="open"?"#16a34a":"#dc2626", display:"inline-block" }}/>
-      {s==="open"?"פתוח":"סגור"}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: s === "open" ? "#dcfce7" : "#fee2e2", color: s === "open" ? "#16a34a" : "#dc2626", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s === "open" ? "#16a34a" : "#dc2626", display: "inline-block" }} />
+      {s === "open" ? "פתוח" : "סגור"}
     </span>
   );
 }
@@ -294,8 +293,6 @@ export default function App() {
       </footer>
 
       <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
-
-      <Analytics />
     </div>
   );
 }
