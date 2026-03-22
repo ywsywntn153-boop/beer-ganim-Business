@@ -41,7 +41,6 @@ const BUSINESSES = [
   { id: 18, name: "אורנית – איפור כלות וערב",   cat: "יופי וטיפוח",    tel: "054-5236804",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://instagram.com/oranit.tastas", fb: "", desc: "מאפרת כלות ואירועי ערב" },
   { id: 19, name: "טלינקה – איפור ושיער כלות",  cat: "יופי וטיפוח",    tel: "050-6525573",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "איפור ועיצוב שיער לכלות ואירועי ערב" },
   { id: 20, name: "סטיילינג טיפולי – אורית ברגר", cat: "יופי וטיפוח", tel: "054-5953953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סטיילינג וטיפולי סנדאות" },
-  { id: 73, name: "Rotem Tsaidi - Beauty clinic", cat: "יופי וטיפוח", tel: "054-236-9892", hours: "א׳–ו׳ בתיאום מראש | שבת סגור", addr: "רותם המדבר 11, באר גנים", site: "", ig: "https://www.instagram.com/rotem_beauty_clinic?igsh=aDFleTNycW1vc29u", fb: "", desc: "קליניקה לטיפוח ויופי" },
   { id: 21, name: "פרחי אושר",                  cat: "קניות ושירותים", tel: "054-6671953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חנות פרחים – זרים, עיצובים ומתנות" },
 
   // ═══ בריאות ורפואה ═══
@@ -182,10 +181,6 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
                 <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g,"").replace(/^0/,"")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#16a34a",borderColor:"#bbf7d0"}}>💬 וואטסאפ</a>
               </>
             )}
-            {biz.site && <a href={biz.site.startsWith("http")?biz.site:"https://"+biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#7c3aed",borderColor:"#ddd6fe"}}>🌐 אתר</a>}
-            {biz.ig && biz.ig.startsWith("http") && (
-              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#e1306c",borderColor:"#fbcfe8"}}>📷 אינסטגרם</a>
-            )}
             {biz.fb && biz.fb.startsWith("http") && (
               <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e=>e.stopPropagation()} style={{color:"#1877f2",borderColor:"#bfdbfe"}}>📘 פייסבוק</a>
             )}
@@ -251,7 +246,7 @@ export default function App() {
       <header style={{background:"linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)",padding:"32px 20px 42px",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(ellipse at 15% 60%,rgba(196,101,26,.22) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(232,162,78,.13) 0%,transparent 50%)"}}/>
         <div style={{position:"relative",zIndex:1}}>
-          <div style={{fontSize:38,marginBottom:7,filter:"drop-shadow(0 2px 8px rgba(0,0,0,.35))"}}>🌿</div>
+          <div style={{fontSize:38,marginBottom:7}}>🌿</div>
           <h1 style={{fontSize:"clamp(28px,8vw,50px)",fontWeight:900,color:"#f5e6cc",lineHeight:1.05,letterSpacing:"-1px"}}>עסקים בבאר גנים</h1>
           <p style={{color:"#c4a97d",fontSize:14,marginTop:9,fontWeight:300}}>{BUSINESSES.length} עסקים ושירותים מקומיים</p>
         </div>
@@ -284,10 +279,6 @@ export default function App() {
       <footer style={{textAlign:"center",padding:"20px",color:"#b09070",fontSize:13,borderTop:"1px solid #ecdfc8",background:"#ede7da"}}>
         <p style={{fontWeight:700,color:"#6b4c2a"}}>עסקים בבאר גנים</p>
         <p style={{marginTop:6}}>לעדכונים והוספת עסק: <a href="tel:0559139013" style={{color:"#c4651a",fontWeight:700,textDecoration:"none"}}>055-913-9013</a></p>
-        <div style={{marginTop:12,fontSize:13,color:"#8a6a4a"}}>
-          🏪 בעל עסק? מעוניין לעדכן פרטים או להסיר את העסק מהרשימה?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, אני בעל עסק ואני מעוניין לעדכן/להסיר את העסק שלי מהרשימה" target="_blank" rel="noreferrer" style={{color:"#c4651a",fontWeight:700,textDecoration:"underline"}}>לחץ כאן לשליחת הודעה</a>
-        </div>
         <div style={{marginTop:14,fontSize:11,color:"#aaa",maxWidth:480,margin:"14px auto 0",lineHeight:1.6,padding:"10px 14px",background:"#f5ede0",borderRadius:10}}>
           המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
         </div>
