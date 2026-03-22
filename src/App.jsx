@@ -1,4 +1,22 @@
 import { useState, useMemo, useEffect } from "react";
+// חיבור ל-Firebase
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "firebase/firestore";
+
+// הגדרות ה-Firebase שלך
+const firebaseConfig = {
+  apiKey: "AIzaSyByyoKHKkkW5M1FanRqH0IsYIbqheE92mU",
+  authDomain: "beer-ganim-app.firebaseapp.com",
+  projectId: "beer-ganim-app",
+  storageBucket: "beer-ganim-app.firebasestorage.app",
+  messagingSenderId: "22315161123",
+  appId: "1:22315161123:web:50259a17d045d210c34396",
+  measurementId: "G-SJXS2LGVH0"
+};
+
+// אתחול Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -272,7 +290,7 @@ function AddListingForm({ onAdd, onClose }) {
           if (width > 600) { height = Math.round(height * 600 / width); width = 600; }
           canvas.width = width; canvas.height = height;
           canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.6); // דחיסה קלה כדי לחסוך מקום
           setImages(prev => prev.length < 2 ? [...prev, dataUrl] : prev);
         };
         img.src = ev.target.result;
@@ -285,7 +303,7 @@ function AddListingForm({ onAdd, onClose }) {
     if (!form.title.trim()) return alert("חובה למלא כותרת למודעה!");
     if (form.tel.length !== 10) return alert("מספר טלפון חייב להכיל בדיוק 10 ספרות (לדוגמה: 0501234567)");
     
-    onAdd({...form, images, id: Date.now(), date: new Date().toLocaleDateString("he-IL")});
+    onAdd({...form, images, timestamp: Date.now(), date: new Date().toLocaleDateString("he-IL")});
     onClose();
   };
 
@@ -334,24 +352,32 @@ export default function App() {
   const [expandedId, setExpandedId] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  
-  const [listings, setListings] = useState(() => {
-    try {
-      const saved = localStorage.getItem("beer_ganim_listings");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [listings, setListings] = useState([]);
 
+  // חיבור לייב למסד הנתונים בענן
   useEffect(() => {
+    const q = query(collection(db, "listings"), orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      setListings(data);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const addListing = async (item) => {
     try {
-      localStorage.setItem("beer_ganim_listings", JSON.stringify(listings));
+      await addDoc(collection(db, "listings"), item);
     } catch (e) {
-      console.error("Storage full");
+      alert("שגיאה בפרסום המודעה. וודא שביצעת 'Create Database' ב-Firebase.");
     }
-  }, [listings]);
-  
+  };
+
+  const deleteListing = async (id) => {
+    if (window.confirm("בטוח שברצונך למחוק את המודעה?")) {
+      await deleteDoc(doc(db, "listings", id));
+    }
+  };
+
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
 
   const filtered = useMemo(() => {
@@ -481,7 +507,7 @@ export default function App() {
              ) : (
                <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(285px,1fr))", gap: 13 }}>
                  {filteredListings.map(item => (
-                   <MarketCard key={item.id} item={item} onDelete={id => setListings(l => l.filter(x => x.id !== id))} />
+                   <MarketCard key={item.id} item={item} onDelete={deleteListing} />
                  ))}
                </div>
              )}
@@ -490,25 +516,15 @@ export default function App() {
 
       <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 14, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
         <p style={{ fontWeight: 700, color: "#6b4c2a", fontSize: 16 }}>עסקים בבאר גנים</p>
-        
         <p style={{ marginTop: 10, color: "#4a3218", fontWeight: 500 }}>
           בעל עסק? רוצה שנבנה לך אתר?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, ראיתי את האתר של באר גנים ואשמח לקבל פרטים על בניית אתר לעסק שלי!" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a>
+          <a href="https://wa.me/9720559139013" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a>
         </p>
-
-        <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>
-          🏪 מעוניין להוסיף, לעדכן פרטים או להסיר עסק מהרשימה?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, אשמח לעדכן פרטים של עסק באתר באר גנים" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלח הודעה</a>
-        </div>
-        
-        <div style={{ marginTop: 14, fontSize: 11, color: "#aaa", maxWidth: 480, margin: "14px auto 0", lineHeight: 1.6, padding: "10px 14px", background: "#f5ede0", borderRadius: 10 }}>
-          המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
-        </div>
       </footer>
 
       <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
       
-      {showForm && <AddListingForm onAdd={item => { setListings(l => [item, ...l]); setTab("market"); }} onClose={() => setShowForm(false)} />}
+      {showForm && <AddListingForm onAdd={addListing} onClose={() => setShowForm(false)} />}
     </div>
   );
 }
