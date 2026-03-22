@@ -97,7 +97,7 @@ const BUSINESSES = [
   { id: 61, name: "ברוריה נעמי – אנגלית",         cat: "חינוך",            tel: "052-8709406",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שיעורים פרטיים באנגלית לכל הגילאים" },
   { id: 62, name: "סניף בני עקיבא",               cat: "חינוך",            tel: "",              hours: "",               addr: "רימון 34, באר גנים",       site: "", ig: "", fb: "", desc: "תנועת נוער – פעילות שוטפת לכל הגילאים" },
   { id: 63, name: "בי\"ס באר גנים – דרך הצלילים", cat: "חינוך",           tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בית ספר יסודי ביישוב" },
-  { id: 74, name: "תימור נחמני – ללמוד אנגלית בכיף", cat: "חינוך",        tel: "055-953-3294",  hours: "",               addr: "רימון 27, באר גנים",       site: "", ig: "", fb: "", desc: "מורה לאנגלית לכל הגילאים - מהקניית שפה ועד הגשה לבגרות." },
+  { id: 74, name: "תימור נחמני – ללמוד אנגלית בכיף", cat: "חינוך",        tel: "053-420-5110",  hours: "",               addr: "רימון 27, באר גנים",       site: "", ig: "", fb: "", desc: "מורה לאנגלית לכל הגילאים - מהקניית שפה ועד הגשה לבגרות." },
 
   // ═══ טכנולוגיה ועסקים ═══
   { id: 64, name: "ביננו – Bnano מחשבים",        cat: "טכנולוגיה ועסקים", tel: "058-625-0506",  hours: "א׳–ה׳ 09:00–17:00 | שישי ושבת סגור", addr: "בשביל התקווה, באר גנים", site: "http://www.bnano.co.il/", ig: "", fb: "", desc: "תיקון ומכירת מחשבים, סלולר, אלקטרוניקה – משלוח לכל הארץ" },
@@ -296,13 +296,19 @@ export default function App() {
         }
       </main>
 
-      <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 13, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
-        <p style={{ fontWeight: 700, color: "#6b4c2a" }}>עסקים בבאר גנים</p>
-        <p style={{ marginTop: 6 }}>לעדכונים והוספת עסק: <a href="tel:0559139013" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "none" }}>055-913-9013</a></p>
+      <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 14, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
+        <p style={{ fontWeight: 700, color: "#6b4c2a", fontSize: 16 }}>עסקים בבאר גנים</p>
+        
+        <p style={{ marginTop: 10, color: "#4a3218", fontWeight: 500 }}>
+          בעל עסק? רוצה שנבנה לך אתר?{" "}
+          <a href="https://wa.me/9720559139013?text=שלום, ראיתי את האתר של באר גנים ואשמח לקבל פרטים על בניית אתר לעסק שלי!" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a>
+        </p>
+
         <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>
-          🏪 בעל עסק? מעוניין לעדכן פרטים או להסיר את העסק מהרשימה?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, אני בעל עסק ואני מעוניין לעדכן/להסיר את העסק שלי מהרשימה" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>לחץ כאן לשליחת הודעה</a>
+          🏪 מעוניין להוסיף, לעדכן פרטים או להסיר עסק מהרשימה?{" "}
+          <a href="https://wa.me/9720559139013?text=שלום, אשמח לעדכן פרטים של עסק באתר באר גנים" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלח הודעה</a>
         </div>
+        
         <div style={{ marginTop: 14, fontSize: 11, color: "#aaa", maxWidth: 480, margin: "14px auto 0", lineHeight: 1.6, padding: "10px 14px", background: "#f5ede0", borderRadius: 10 }}>
           המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
         </div>
