@@ -1,4 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
+// 1. ייבוא גוגל אנליטיקס
+import ReactGA from "react-ga4";
+
+// 2. אתחול עם הקוד שלך
+ReactGA.initialize("G-C627XK0Q14");
 
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -142,6 +147,15 @@ function OpenBadge({ hours }) {
 function Card({ biz, idx, expanded, onToggle, mounted }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
 
+  // 3. פונקציה למעקב אחרי לחיצות
+  const trackClick = (type) => {
+    ReactGA.event({
+      category: "Engagement",
+      action: `${type}_Click`,
+      label: biz.name
+    });
+  };
+
   return (
     <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${idx * 35}ms`, borderTop: `3px solid ${cs.color}` }} onClick={onToggle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
@@ -163,7 +177,9 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
       <div className="dr" style={{ borderTop: "1px solid #f0e8d8" }}>
         <span style={{ fontSize: 15, flexShrink: 0 }}>📞</span>
         {biz.tel
-          ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a>
+          ? <a href={`tel:${biz.tel}`} 
+               onClick={e => { e.stopPropagation(); trackClick("Phone"); }} 
+               style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a>
           : <span style={{ color: "#b09070", fontSize: 13, fontStyle: "italic" }}>לחץ לפרטים</span>
         }
       </div>
@@ -179,19 +195,31 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 13 }}>
             {biz.tel && (
               <>
-                <a href={`tel:${biz.tel}`} className="ab p" onClick={e => e.stopPropagation()}>📞 התקשר</a>
-                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g, "").replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#16a34a", borderColor: "#bbf7d0" }}>💬 וואטסאפ</a>
+                <a href={`tel:${biz.tel}`} className="ab p" onClick={e => { e.stopPropagation(); trackClick("Phone_Call"); }}>📞 התקשר</a>
+                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g, "").replace(/^0/, "")}`} 
+                   target="_blank" rel="noreferrer" className="ab o" 
+                   onClick={e => { e.stopPropagation(); trackInteraction("WhatsApp"); }} 
+                   style={{ color: "#16a34a", borderColor: "#bbf7d0" }}>💬 וואטסאפ</a>
               </>
             )}
-            {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
+            {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} 
+                           target="_blank" rel="noreferrer" className="ab o" 
+                           onClick={e => { e.stopPropagation(); trackClick("Website"); }} 
+                           style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
             {biz.ig && (
-              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>
+              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" 
+                 onClick={e => { e.stopPropagation(); trackClick("Instagram"); }} 
+                 style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>
             )}
             {biz.fb && biz.fb.startsWith("http") && (
-              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>
+              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" 
+                 onClick={e => { e.stopPropagation(); trackClick("Facebook"); }} 
+                 style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>
             )}
             {biz.tiktok && biz.tiktok.startsWith("http") && (
-              <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>
+              <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" 
+                 onClick={e => { e.stopPropagation(); trackClick("TikTok"); }} 
+                 style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>
             )}
           </div>
         </div>
@@ -205,7 +233,12 @@ export default function App() {
   const [activeCat, setActiveCat] = useState("הכל");
   const [expandedId, setExpandedId] = useState(null);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
+
+  // 4. מעקב אחרי צפייה בדף
+  useEffect(() => { 
+    setMounted(true); 
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
