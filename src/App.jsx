@@ -236,8 +236,9 @@ function BusinessesView({ onBack }) {
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
-      <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
-        ➔ חזור למסך הראשי
+      {/* כפתור חזרה קבוע (Sticky) */}
+      <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(26, 13, 4, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+        ➔ למסך הראשי
       </button>
 
       <header style={{ background: "linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)", padding: "42px 20px 42px", textAlign: "center", position: "relative", overflow: "hidden" }}>
@@ -323,7 +324,6 @@ function MarketView({ onBack }) {
     return () => unsubscribe();
   }, []);
 
-  // מנגנון הכיווץ האוטומטי לתמונות!
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -336,7 +336,6 @@ function MarketView({ onBack }) {
         let width = img.width;
         let height = img.height;
 
-        // נקטין את התמונה אם היא ענקית (מקסימום 800 פיקסלים רוחב/גובה)
         const MAX_SIZE = 800;
         if (width > height) {
           if (width > MAX_SIZE) {
@@ -355,13 +354,12 @@ function MarketView({ onBack }) {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
 
-        // כיווץ לפורמט JPEG באיכות של 60% (לא שמים לב להבדל במסך קטן, אבל שוקל כלום)
         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
         setNewAd({ ...newAd, image: compressedDataUrl });
       };
       img.src = event.target.result;
     };
-    reader.readAsDataURL(file); // קורא את הקובץ המקורי ומתחיל את שרשרת הכיווץ
+    reader.readAsDataURL(file); 
   };
 
   const handleAddAd = async (e) => {
@@ -413,9 +411,11 @@ function MarketView({ onBack }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", paddingBottom: "40px" }}>
-      <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
-        ➔ חזור למסך הראשי
+    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", display: "flex", flexDirection: "column" }}>
+      
+      {/* כפתור חזרה קבוע (Sticky) */}
+      <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+        ➔ למסך הראשי
       </button>
 
       <header style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)", padding: "42px 20px 30px", textAlign: "center" }}>
@@ -424,7 +424,7 @@ function MarketView({ onBack }) {
         <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
       </header>
 
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
+      <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
         <button 
           onClick={() => setShowForm(true)} 
           style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
@@ -479,6 +479,18 @@ function MarketView({ onBack }) {
           )}
         </div>
       </main>
+
+      {/* פוטר חדש למסך השוק עם פרטי יצירת קשר */}
+      <footer style={{ textAlign: "center", padding: "24px 20px", color: "#64748b", fontSize: 14, borderTop: "1px solid #e2e8f0", background: "#f1f5f9", marginTop: "auto" }}>
+        <p style={{ fontWeight: 900, color: "#0f172a", fontSize: 16 }}>שוק באר גנים</p>
+        <div style={{ marginTop: 12, fontSize: 14, color: "#475569" }}>
+          מצאתם באג? משהו לא עובד? יש לכם הצעות לשיפור?{" "}
+          <br />
+          <a href="https://wa.me/9720559139013?text=שלום יונתן, ראיתי תקלה/יש לי הצעה לשוק באר גנים:" target="_blank" rel="noreferrer" style={{ color: "#2563eb", fontWeight: 800, textDecoration: "underline", display: "inline-block", marginTop: "5px" }}>
+            לחצו כאן ושלחו לי הודעה
+          </a>
+        </div>
+      </footer>
 
       {/* ---- חלון פופ-אפ להצגת המודעה בגדול ---- */}
       {selectedAd && (
