@@ -1,6 +1,27 @@
 import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
+// --- ייבוא פונקציות של פיירבייס ---
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
 
+// --- החיבור האישי שלך ל-Firebase ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDfo0w8gXhq1ndMuBY5xCQHDl_LUSU_v5Y",
+  authDomain: "beer-ganim-app-8eee1.firebaseapp.com",
+  projectId: "beer-ganim-app-8eee1",
+  storageBucket: "beer-ganim-app-8eee1.firebasestorage.app",
+  messagingSenderId: "667521262894",
+  appId: "1:667521262894:web:0efa598ce92ffa945a46bf"
+};
+
+// אתחול האפליקציה ומסד הנתונים
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. נתוני העסקים (ללא שינוי!)
+// ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
   "בריאות ורפואה":      { emoji: "🩺", color: "#059669", bg: "#ecfdf5" },
@@ -203,7 +224,7 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. קומפוננטת העסקים - BusinessesView
+// 2. קומפוננטת העסקים - BusinessesView (עיצוב מקורי שמור)
 // ─────────────────────────────────────────────────────────────────────────────
 function BusinessesView({ onBack }) {
   const [search, setSearch] = useState("");
@@ -243,7 +264,6 @@ function BusinessesView({ onBack }) {
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f7f3ed", color: "#1e140a" }}>
-      {/* ⚠️ כאן הוחזר בלוק העיצוב המקורי שלך! ⚠️ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
@@ -273,7 +293,6 @@ function BusinessesView({ onBack }) {
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
-      {/* כפתור חזור */}
       <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
         ➔ חזור למסך הראשי
       </button>
@@ -333,16 +352,48 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView
+// 3. מסך השוק - MarketView (מחובר למסד נתונים פיירבייס!)
 // ─────────────────────────────────────────────────────────────────────────────
 function MarketView({ onBack }) {
+  const [ads, setAds] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [newAd, setNewAd] = useState({ title: "", price: "", tel: "" });
+  const [loading, setLoading] = useState(false);
 
-  const dummyAds = [
-    { id: 1, title: "אופני הרים לגבר מצב חדש", price: "450", tel: "050-1234567", date: "היום" },
-    { id: 2, title: "ספרי לימוד לכיתה י' במצב מעולה", price: "100", tel: "054-9876543", date: "אתמול" },
-    { id: 3, title: "שולחן סלון מעץ אלון", price: "250", tel: "052-1112233", date: "לפני יומיים" },
-  ];
+  // משיכת הנתונים מפיירבייס בזמן אמת
+  useEffect(() => {
+    const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const adsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAds(adsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // פונקציה לשליחת מודעה חדשה לפיירבייס
+  const handleAddAd = async (e) => {
+    e.preventDefault();
+    if (!newAd.title || !newAd.price || !newAd.tel) {
+      alert("נא למלא את כל השדות (כותרת, מחיר וטלפון)");
+      return;
+    }
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "ads"), {
+        title: newAd.title,
+        price: newAd.price,
+        tel: newAd.tel,
+        date: new Date().toLocaleDateString("he-IL"),
+        createdAt: serverTimestamp()
+      });
+      setShowForm(false);
+      setNewAd({ title: "", price: "", tel: "" });
+    } catch (error) {
+      console.error("Error adding doc:", error);
+      alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס על מצב Test Mode כמו שהוסבר.");
+    }
+    setLoading(false);
+  };
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
@@ -361,36 +412,71 @@ function MarketView({ onBack }) {
           onClick={() => setShowForm(true)} 
           style={{ width: "100%", padding: "15px", marginBottom: "20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
         >
-          + פרסם מודעה חדשה (בקרוב)
+          + פרסם מודעה חדשה
         </button>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {dummyAds.map(ad => (
-            <div key={ad.id} style={{ background: "#fff", padding: "15px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <h3 style={{ fontSize: "16px", fontWeight: "bold" }}>{ad.title}</h3>
-                <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>₪{ad.price}</span>
-              </div>
-              <p style={{ color: "#64748b", fontSize: "12px", marginTop: "10px" }}>פורסם: {ad.date}</p>
-              <div style={{ marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
-                <a href={`https://wa.me/972${ad.tel.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: "20px", textDecoration: "none", fontSize: "13px", fontWeight: "bold" }}>
-                  💬 שלח הודעה למוכר
-                </a>
-              </div>
+          {ads.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
+              אין מודעות כרגע. תהיה הראשון לפרסם!
             </div>
-          ))}
+          ) : (
+            ads.map(ad => (
+              <div key={ad.id} style={{ background: "#fff", padding: "15px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "bold" }}>{ad.title}</h3>
+                  <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>₪{ad.price}</span>
+                </div>
+                <p style={{ color: "#64748b", fontSize: "12px", marginTop: "10px" }}>פורסם: {ad.date || "היום"}</p>
+                <div style={{ marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
+                  <a href={`https://wa.me/972${ad.tel.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: "20px", textDecoration: "none", fontSize: "13px", fontWeight: "bold" }}>
+                    💬 שלח הודעה למוכר
+                  </a>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </main>
 
+      {/* פופ-אפ להוספת מודעה */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-          <div style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center" }}>פרסום מודעה חדשה</h2>
-            <p style={{ color: "#64748b", fontSize: "14px", textAlign: "center", marginBottom: "20px" }}>* מודול שמירת הנתונים יתווסף בשלב הבא *</p>
-            <input placeholder="מה תרצה למכור?" style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} />
-            <input placeholder="מחיר (בשקלים)" type="number" style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} />
-            <button onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "#cbd5e1", color: "#0f172a", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>סגור בינתיים</button>
-          </div>
+          <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
+            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a" }}>מודעה חדשה</h2>
+            
+            <input 
+              placeholder="מה תרצה למכור?" 
+              value={newAd.title} 
+              onChange={e => setNewAd({...newAd, title: e.target.value})}
+              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} 
+            />
+            
+            <input 
+              placeholder="מחיר (בשקלים)" 
+              type="number" 
+              value={newAd.price} 
+              onChange={e => setNewAd({...newAd, price: e.target.value})}
+              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} 
+            />
+            
+            <input 
+              placeholder="מספר טלפון (לחזרה בוואטסאפ)" 
+              type="tel" 
+              value={newAd.tel} 
+              onChange={e => setNewAd({...newAd, tel: e.target.value})}
+              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "20px", fontFamily: "Heebo" }} 
+            />
+            
+            <button type="submit" disabled={loading} style={{ width: "100%", padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginBottom: "10px" }}>
+              {loading ? "מפרסם..." : "פרסם מודעה"}
+            </button>
+            
+            <button type="button" onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+              ביטול
+            </button>
+          </form>
         </div>
       )}
     </div>
@@ -467,6 +553,13 @@ export default function App() {
 
   return (
     <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      `}</style>
+
       {currentView === "home" && <HomeView onNavigate={setCurrentView} />}
       {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} />}
       {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} />}
