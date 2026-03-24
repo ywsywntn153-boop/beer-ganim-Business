@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
-// --- ייבוא פונקציות של פיירבייס ---
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 
-// --- החיבור האישי שלך ל-Firebase ---
+// --- החיבור שלך לפיירבייס ---
 const firebaseConfig = {
   apiKey: "AIzaSyDfo0w8gXhq1ndMuBY5xCQHDl_LUSU_v5Y",
   authDomain: "beer-ganim-app-8eee1.firebaseapp.com",
@@ -14,13 +13,12 @@ const firebaseConfig = {
   appId: "1:667521262894:web:0efa598ce92ffa945a46bf"
 };
 
-// אתחול האפליקציה ומסד הנתונים
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (ללא שינוי!)
+// 1. נתוני העסקים (ללא שינוי - נשאר בול כמו שביקשת)
 // ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -37,17 +35,12 @@ const CATEGORIES = {
 };
 
 const BUSINESSES = [
-  // ═══ קהילה ═══
   { id: 1,  name: "דואר בבאר גנים",          cat: "קהילה",            tel: "",              hours: "ראשון ורביעי 17:00–19:00", addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סניף דואר ישראל ביישוב" },
   { id: 2,  name: "המכולת היישובית",          cat: "מזון ואוכל",       tel: "",              hours: "א׳–ה׳ 06:30–21:00 | שישי 06:30–15:30 | שבת סגור", addr: "סביון 20, באר גנים", site: "", ig: "", fb: "", desc: "מכולת שכונתית – מוצרי יומיום טריים" },
   { id: 3,  name: "ספריה ניצן",                cat: "קהילה",            tel: "",              hours: "א,ב,ד 15:00–18:30 | ב,ד 09:00–12:30", addr: "באר גנים", site: "", ig: "", fb: "", desc: "ספרייה ציבורית ביישוב" },
-
-  // ═══ מזון ═══
   { id: 4,  name: "פיצה פארטי",                cat: "מזון ואוכל",       tel: "052-689-9733",  hours: "א׳–ה׳ 15:30–23:00 | שבת 17:30–23:00 | שישי סגור", addr: "באר גנים 1", site: "", ig: "", fb: "", desc: "פיצריה מקומית – משלוחים ואיסוף עצמי" },
   { id: 5,  name: "השניצל של ציפי",            cat: "מזון ואוכל",       tel: "054-6671707",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חלת שניצל מפנקת ליום שיש" },
   { id: 6,  name: "קובי אירועי בוטיק – שף פרטי", cat: "מזון ואוכל",  tel: "054-7372734",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שף פרטי בשרי לאירועים ובוטיק" },
-
-  // ═══ יופי וטיפוח ═══
   { id: 7,  name: "נלו דה לאון – מספרת גברים", cat: "יופי וטיפוח",     tel: "053-2838100",   hours: "",               addr: "רימון 11, באר גנים",       site: "", ig: "https://www.instagram.com/barber_nelo", fb: "", desc: "מספרת גברים וילדים" },
   { id: 8,  name: "גלית עיצוב שיער",            cat: "יופי וטיפוח",     tel: "054-7755845",   hours: "",               addr: "מלכית 70, באר גנים",       site: "", ig: "", fb: "", desc: "מספרה לנשים – עיצוב שיער וצבע" },
   { id: 9,  name: "חיה – החלקות שיער עד הבית", cat: "יופי וטיפוח",   tel: "052-5253772",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "החלקת שיער מינרלי עד בית הלקוחה" },
@@ -64,8 +57,6 @@ const BUSINESSES = [
   { id: 20, name: "סטיילינג טיפולי – אורית ברגר", cat: "יופי וטיפוח", tel: "054-5953953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סטיילינג וטיפולי סנדאות" },
   { id: 73, name: "Rotem Tsaidi - Beauty clinic", cat: "יופי וטיפוח", tel: "054-236-9892", hours: "א׳–ו׳ בתיאום מראש | שבת סגור", addr: "רותם המדבר 11, באר גנים", site: "", ig: "https://www.instagram.com/rotem_beauty_clinic?igsh=aDFleTNycW1vc29u", fb: "", desc: "החלקות שיער אורגניות | עיצוב ושיקום גבות טבעיות | הרמת גבות" },
   { id: 21, name: "פרחי אושר",                  cat: "קניות ושירותים", tel: "054-6671953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חנות פרחים – זרים, עיצובים ומתנות" },
-
-  // ═══ בריאות ורפואה ═══
   { id: 22, name: "ד\"ר ריי ביטון",              cat: "בריאות ורפואה",  tel: "058-789-6543",  hours: "פתוח 24 שעות (מומלץ לתאם מראש)", addr: "רימון 34, באר גנים", site: "", ig: "", fb: "", desc: "מרפאה / קליניקה – רפואה כללית" },
   { id: 23, name: "מיכל מרים – איזון גוף ונפש", cat: "בריאות ורפואה",  tel: "054-2191590",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/michaldamri/", fb: "", desc: "מסאז', עיסוי, רפלקסולוגיה וטיפול במגע" },
   { id: 24, name: "הודיה ז'ורנו – ריפוי בעיסוק", cat: "בריאות ורפואה", tel: "052-3377110",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
@@ -79,15 +70,11 @@ const BUSINESSES = [
   { id: 32, name: "אלונה בורלא – יועצת הנקה IBCLC", cat: "בריאות ורפואה", tel: "050-3010497", hours: "",              addr: "באר גנים",                  site: "http://www.imanika.co.il", ig: "", fb: "", desc: "ייעוץ הנקה מוסמך IBCLC" },
   { id: 33, name: "עדן מויאל – מרפאה בעיסוק",    cat: "בריאות ורפואה",  tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
   { id: 75, name: "אביב רפאלי נחמני – מטפל בחרדות ובטראומה", cat: "בריאות ורפואה", tel: "053-420-5110", hours: "", addr: "רימון 27, באר גנים", site: "https://rafaelnlp.com", ig: "https://www.instagram.com/avivnahmani?igsh=ajFoYXdueXV5aTln", fb: "", tiktok: "https://www.tiktok.com/@avivrefaelinahmani?_r=1&_t=ZS-94uNNR0hTPA", desc: "מטפל בחרדות ובטראומה" },
-
-  // ═══ כושר ופנאי ═══
   { id: 34, name: "סטודיו שלו יפרח – כושר ופילאטיס", cat: "כושר ופנאי", tel: "050-444-2871", hours: "א׳–ה׳ 06:00–21:00 | שישי 08:00–13:00 | שבת סגור", addr: "דרך הים 21, באר גנים", site: "", ig: "", fb: "", desc: "מגוון אימונים, שיעורי סטודיו ופילאטיס" },
   { id: 35, name: "סיס פילאטיס – Lee Pilates",    cat: "כושר ופנאי",    tel: "",              hours: "",               addr: "אדווה 43, באר גנים",       site: "", ig: "", fb: "", desc: "סטודיו לפילאטיס מכשירים – אימונים אישיים וזוגיים" },
   { id: 36, name: "מועדון הטניס ״עולם הטניס״",    cat: "כושר ופנאי",    tel: "058-5826577",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/tennisworld_il", fb: "", desc: "אימוני טניס לילדים, נוער ובוגרים – מיכה גולנדר" },
   { id: 37, name: "\"איזהו גיבור\" – אמנויות לחימה", cat: "כושר ופנאי", tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קראטה, קרב מגע והגנה עצמית לכל הגילאים" },
   { id: 38, name: "זהבה בוהדנה – אימון לחיים",    cat: "כושר ופנאי",    tel: "",              hours: "",               addr: "חבצלת החוף 6, באר גנים",   site: "", ig: "", fb: "", desc: "קואצ'ינג, הכוונה ואימון משפחתי" },
-
-  // ═══ בניה ותחזוקה ═══
   { id: 39, name: "אלומיניום אבירם",              cat: "בניה ותחזוקה",   tel: "054-7600172",   hours: "",               addr: "אפיקי מים, באר גנים",      site: "", ig: "", fb: "https://www.facebook.com/share/1AtLyW6pM3/", desc: "עבודות אלומיניום וזכוכית – תריסים, רשתות, חלונות, מקלחונים" },
   { id: 40, name: "איליה הנדסה וייעוץ חשמל",      cat: "בניה ותחזוקה",   tel: "054-6543409",   hours: "",               addr: "באר גנים",                  site: "https://handasat-hashmal.com", ig: "", fb: "", desc: "תכנון וביצוע פרויקטים חשמל" },
   { id: 41, name: "דרור תנעמי – חשמל ומיזוג",     cat: "בניה ותחזוקה",   tel: "050-5502598",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "התקנות ותיקונים חשמל ומיזוג" },
@@ -101,32 +88,22 @@ const BUSINESSES = [
   { id: 49, name: "גן הורד – גינון",               cat: "בניה ותחזוקה",   tel: "051-5474438",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שירותי גינון – דורון" },
   { id: 50, name: "בן שמעוני – ניקוי פנלים סולריים", cat: "בניה ותחזוקה", tel: "050-478-2884", hours: "",              addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ניקוי לוחות סולאריים" },
   { id: 51, name: "נעמה הדר כהן – עיצוב פנים",    cat: "בניה ותחזוקה",   tel: "054-5236505",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/m_n_interiordesign/", fb: "", desc: "עיצוב פנים לבית" },
-
-  // ═══ מקצועות חופשיים ═══
   { id: 52, name: "עדי תנעמי – עו\"ד ומגשרת",    cat: "מקצועות חופשיים", tel: "054-2131926",   hours: "",               addr: "באר גנים",                  site: "https://get-marketing.co.il/adi-tanami", ig: "", fb: "", desc: "דיני משפחה, מקרקעין, מעמד אישי, צוואות, גישור וייפוי כוח" },
   { id: 53, name: "עו\"ד אביתר בן נעים",          cat: "מקצועות חופשיים", tel: "050-6920926",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ליטיגציה וחדלות פירעון" },
   { id: 54, name: "נסים מרדכי – שמאות מקרקעין",  cat: "מקצועות חופשיים", tel: "054-5236488",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שמאי מקרקעין" },
   { id: 55, name: "מור בטיחות",                  cat: "מקצועות חופשיים", tel: "054-7775612",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הדרכות בטיחות – עזרא" },
-
-  // ═══ אירועים וצילום ═══
   { id: 56, name: "מעין תשובה – סטודיו לצילום",  cat: "אירועים וצילום",  tel: "050-3311841",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/maayan.tshuva.photographer", fb: "", desc: "צלמת משפחות, בוק מצווה, גיל שנה, חאלקה, תדמית" },
   { id: 57, name: "הפקות יגל&שהם",                cat: "אירועים וצילום",  tel: "052-4225365",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/yagel.photographer", fb: "", desc: "צילומי סטילס, מגנטים, אינסטבלוקים לאירועים + מכירת אינסטבלוקים לפי מחירון" },
   { id: 58, name: "שלום תשובה הפקות",             cat: "אירועים וצילום",  tel: "052-4449898",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הגברה, תאורה ואולפן הקלטות" },
   { id: 59, name: "מתנפחים ונהנים",              cat: "אירועים וצילום",  tel: "054-5236505",   hours: "",               addr: "באר גנים",                  site: "https://afriatmichi.github.io/Cohen/", ig: "", fb: "", desc: "השכרת מתנפחים ומכונות מזון לאירועים" },
   { id: 60, name: "מור עושה דרמה",                cat: "אירועים וצילום",  tel: "054-6867726",   hours: "",               addr: "באר גנים",                  site: "https://moryefet.mozello.co.il/", ig: "", fb: "", desc: "תיאטרון, סדנאות, כתיבה ובימוי – מור יפת" },
-
-  // ═══ חינוך ═══
   { id: 61, name: "ברוריה נעמי – אנגלית",         cat: "חינוך",            tel: "052-8709406",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שיעורים פרטיים באנגלית לכל הגילאים" },
   { id: 62, name: "סניף בני עקיבא",               cat: "חינוך",            tel: "",              hours: "",               addr: "רימון 34, באר גנים",       site: "", ig: "", fb: "", desc: "תנועת נוער – פעילות שוטפת לכל הגילאים" },
   { id: 63, name: "בי\"ס באר גנים – דרך הצלילים", cat: "חינוך",           tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בית ספר יסודי ביישוב" },
   { id: 74, name: "תימור נחמני – ללמוד אנגלית בכיף", cat: "חינוך",        tel: "053-420-5110",  hours: "",               addr: "רימון 27, באר גנים",       site: "", ig: "", fb: "", desc: "מורה לאנגלית לכל הגילאים - מהקניית שפה ועד הגשה לבגרות." },
-
-  // ═══ טכנולוגיה ועסקים ═══
   { id: 64, name: "ביננו – Bnano מחשבים",        cat: "טכנולוגיה ועסקים", tel: "058-625-0506",  hours: "א׳–ה׳ 09:00–17:00 | שישי ושבת סגור", addr: "בשביל התקווה, באר גנים", site: "http://www.bnano.co.il/", ig: "", fb: "", desc: "תיקון ומכירת מחשבים, סלולר, אלקטרוניקה – משלוח לכל הארץ" },
   { id: 65, name: "kprint – קייפרינט",            cat: "טכנולוגיה ועסקים", tel: "054-4946300",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "https://www.facebook.com/share/1BPPWfdWLw/", desc: "הדפסה, מיתוג ומתנות על מוצרים – דביר מעוז" },
   { id: 66, name: "3DT – הדפסה בתלת מימד",      cat: "טכנולוגיה ועסקים", tel: "054-5684370",   hours: "",               addr: "באר גנים",                  site: "https://3DT.pro", ig: "lid_or_design", fb: "", desc: "הנדסה, עיצוב מוצר, הדפסה בתלת מימד ומוצרי הום דקור – דביר" },
-
-  // ═══ קניות ושירותים ═══
   { id: 68, name: "אילניטוס – סוכנות נסיעות",    cat: "קניות ושירותים",  tel: "054-3532637",   hours: "",               addr: "באר גנים",                  site: "https://did.li/elanitus", ig: "", fb: "", desc: "חופשות ונופש בארץ ובעולם – אילנית בוקרה" },
   { id: 69, name: "מתן שפע רכב ואנרגיה",          cat: "קניות ושירותים",  tel: "050-4708069",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: " שרותי רכב קניה ומכירה ומימון + מכירת רכב תפעולי חדש" },
   { id: 70, name: "אודיס פלייס – חיות מחמד",     cat: "קניות ושירותים",  tel: "054-3133996",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/udis_place", fb: "", desc: "מזון וציוד לכלבים, חתולים וכל בעלי החיים" },
@@ -163,7 +140,6 @@ function OpenBadge({ hours }) {
 
 function Card({ biz, idx, expanded, onToggle, mounted }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
-
   return (
     <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${idx * 35}ms`, borderTop: `3px solid ${cs.color}` }} onClick={onToggle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
@@ -175,29 +151,16 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
         </div>
         <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginTop: 2 }}>▾</span>
       </div>
-
       <p style={{ fontSize: 13, color: "#6b5030", marginBottom: 9, lineHeight: 1.55 }}>{biz.desc}</p>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <OpenBadge hours={biz.hours} />
-      </div>
-
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><OpenBadge hours={biz.hours} /></div>
       <div className="dr" style={{ borderTop: "1px solid #f0e8d8" }}>
         <span style={{ fontSize: 15, flexShrink: 0 }}>📞</span>
-        {biz.tel
-          ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a>
-          : <span style={{ color: "#b09070", fontSize: 13, fontStyle: "italic" }}>לחץ לפרטים</span>
-        }
+        {biz.tel ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a> : <span style={{ color: "#b09070", fontSize: 13, fontStyle: "italic" }}>לחץ לפרטים</span>}
       </div>
-
       {expanded && (
         <div className="ex">
-          {biz.addr && biz.addr !== "באר גנים" && (
-            <div className="dr"><span style={{ fontSize: 15 }}>📍</span><span style={{ color: "#4a3218" }}>{biz.addr}</span></div>
-          )}
-          {biz.hours && (
-            <div className="dr"><span style={{ fontSize: 15 }}>🕐</span><span style={{ color: "#4a3218", lineHeight: 1.55 }}>{biz.hours}</span></div>
-          )}
+          {biz.addr && biz.addr !== "באר גנים" && <div className="dr"><span style={{ fontSize: 15 }}>📍</span><span style={{ color: "#4a3218" }}>{biz.addr}</span></div>}
+          {biz.hours && <div className="dr"><span style={{ fontSize: 15 }}>🕐</span><span style={{ color: "#4a3218", lineHeight: 1.55 }}>{biz.hours}</span></div>}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 13 }}>
             {biz.tel && (
               <>
@@ -206,15 +169,9 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
               </>
             )}
             {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
-            {biz.ig && (
-              <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>
-            )}
-            {biz.fb && biz.fb.startsWith("http") && (
-              <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>
-            )}
-            {biz.tiktok && biz.tiktok.startsWith("http") && (
-              <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>
-            )}
+            {biz.ig && <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>}
+            {biz.fb && biz.fb.startsWith("http") && <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>}
+            {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
           </div>
         </div>
       )}
@@ -222,10 +179,6 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
   );
 }
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. קומפוננטת העסקים - BusinessesView
-// ─────────────────────────────────────────────────────────────────────────────
 function BusinessesView({ onBack }) {
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("הכל");
@@ -236,21 +189,11 @@ function BusinessesView({ onBack }) {
 
   const filtered = useMemo(() => {
     let baseList = BUSINESSES;
-    if (activeCat === "פתוח עכשיו") {
-      baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
-    } else if (activeCat !== "הכל") {
-      baseList = baseList.filter(b => b.cat === activeCat);
-    }
-
+    if (activeCat === "פתוח עכשיו") baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
+    else if (activeCat !== "הכל") baseList = baseList.filter(b => b.cat === activeCat);
     const q = search.trim();
     if (!q) return baseList;
-
-    const fuse = new Fuse(baseList, {
-      keys: ["name", "desc", "addr", "cat"],
-      threshold: 0.4,
-      distance: 100,
-    });
-
+    const fuse = new Fuse(baseList, { keys: ["name", "desc", "addr", "cat"], threshold: 0.4, distance: 100 });
     return fuse.search(q).map(result => result.item);
   }, [search, activeCat]);
 
@@ -324,26 +267,15 @@ function BusinessesView({ onBack }) {
         {filtered.length === 0
           ? <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות לפילטר שבחרת</p></div>
           : <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(285px,1fr))", gap: 13 }}>
-            {filtered.map((biz, i) => (
-              <Card key={biz.id} biz={biz} idx={i} expanded={expandedId === biz.id} onToggle={() => setExpandedId(expandedId === biz.id ? null : biz.id)} mounted={mounted} />
-            ))}
+            {filtered.map((biz, i) => <Card key={biz.id} biz={biz} idx={i} expanded={expandedId === biz.id} onToggle={() => setExpandedId(expandedId === biz.id ? null : biz.id)} mounted={mounted} />)}
           </div>
         }
       </main>
 
       <footer style={{ textAlign: "center", padding: "20px", color: "#b09070", fontSize: 14, borderTop: "1px solid #ecdfc8", background: "#ede7da" }}>
         <p style={{ fontWeight: 700, color: "#6b4c2a", fontSize: 16 }}>עסקים בבאר גנים</p>
-        <p style={{ marginTop: 10, color: "#4a3218", fontWeight: 500 }}>
-          בעל עסק? רוצה שנבנה לך אתר?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, ראיתי את האתר של באר גנים ואשמח לקבל פרטים על בניית אתר לעסק שלי!" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a>
-        </p>
-        <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>
-          🏪 מעוניין להוסיף, לעדכן פרטים או להסיר עסק מהרשימה?{" "}
-          <a href="https://wa.me/9720559139013?text=שלום, אשמח לעדכן פרטים של עסק באתר באר גנים" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלח הודעה</a>
-        </div>
-        <div style={{ marginTop: 14, fontSize: 11, color: "#aaa", maxWidth: 480, margin: "14px auto 0", lineHeight: 1.6, padding: "10px 14px", background: "#f5ede0", borderRadius: 10 }}>
-          המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
-        </div>
+        <p style={{ marginTop: 10, color: "#4a3218", fontWeight: 500 }}>בעל עסק? רוצה שנבנה לך אתר? <a href="https://wa.me/9720559139013?text=שלום, ראיתי את האתר של באר גנים ואשמח לקבל פרטים על בניית אתר לעסק שלי!" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a></p>
+        <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>🏪 מעוניין להוסיף, לעדכן פרטים או להסיר עסק מהרשימה? <a href="https://wa.me/9720559139013?text=שלום, אשמח לעדכן פרטים של עסק באתר באר גנים" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלח הודעה</a></div>
       </footer>
       <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
     </div>
@@ -352,15 +284,18 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView 
+// 3. מסך השוק - MarketView (הגרסה המקצועית והחדשה)
 // ─────────────────────────────────────────────────────────────────────────────
+const MARKET_CATEGORIES = ["יד שניה", "רכב", "נדל״ן", "דרושים", "מסירה בחינם", "שונות"];
+
 function MarketView({ onBack }) {
   const [ads, setAds] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [newAd, setNewAd] = useState({ title: "", price: "", tel: "" });
   const [loading, setLoading] = useState(false);
+  
+  // הוספת שדות חדשים: קטגוריה, תיאור, תמונה
+  const [newAd, setNewAd] = useState({ title: "", category: "יד שניה", price: "", desc: "", tel: "", image: "" });
 
-  // יצירת מזהה ייחודי למכשיר כדי לאפשר מחיקה
   const [deviceId] = useState(() => {
     let id = localStorage.getItem("beerGanimDeviceId");
     if (!id) {
@@ -379,24 +314,53 @@ function MarketView({ onBack }) {
     return () => unsubscribe();
   }, []);
 
+  // טיפול בהעלאת תמונה (קריאת הקובץ והפיכתו למחרוזת שאפשר לשמור בפיירבייס)
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // הגבלה ל-2 מגהבייט למניעת קריסה
+        alert("התמונה גדולה מדי! אנא בחר תמונה עד 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewAd({ ...newAd, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddAd = async (e) => {
     e.preventDefault();
-    if (!newAd.title || !newAd.price || !newAd.tel) {
-      alert("נא למלא את כל השדות (כותרת, מחיר וטלפון)");
+    
+    // בדיקות תקינות לפני שליחה
+    if (!newAd.title || !newAd.price || !newAd.tel || !newAd.desc) {
+      alert("נא למלא את כל שדות החובה");
       return;
     }
+
+    // בדיקת מספר טלפון (מתחיל ב-05 ויש בו בדיוק 10 ספרות)
+    const cleanPhone = newAd.tel.replace(/\D/g, ""); // מנקה רווחים או מקפים אם המשתמש שם
+    if (!/^05\d{8}$/.test(cleanPhone)) {
+      alert("מספר הטלפון לא תקין. יש להזין מספר נייד בעל 10 ספרות שמתחיל ב-05.");
+      return;
+    }
+
     setLoading(true);
     try {
       await addDoc(collection(db, "ads"), {
         title: newAd.title,
+        category: newAd.category,
         price: newAd.price,
-        tel: newAd.tel,
+        desc: newAd.desc,
+        tel: cleanPhone, // שומרים את המספר הנקי
+        image: newAd.image,
         date: new Date().toLocaleDateString("he-IL"),
-        authorId: deviceId, // שמירת המזהה של מי שפרסם
+        authorId: deviceId,
         createdAt: serverTimestamp()
       });
       setShowForm(false);
-      setNewAd({ title: "", price: "", tel: "" });
+      setNewAd({ title: "", category: "יד שניה", price: "", desc: "", tel: "", image: "" });
     } catch (error) {
       console.error("Error adding doc:", error);
       alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס.");
@@ -404,7 +368,6 @@ function MarketView({ onBack }) {
     setLoading(false);
   };
 
-  // פונקציית המחיקה החדשה
   const handleDeleteAd = async (id) => {
     if (window.confirm("האם אתה בטוח שברצונך למחוק מודעה זו?")) {
       try {
@@ -425,44 +388,54 @@ function MarketView({ onBack }) {
       <header style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)", padding: "42px 20px 30px", textAlign: "center" }}>
         <div style={{ fontSize: 38, marginBottom: 7 }}>🛒</div>
         <h1 style={{ fontSize: "clamp(28px,8vw,50px)", fontWeight: 900, color: "#f8fafc", letterSpacing: "-1px" }}>שוק באר גנים</h1>
-        <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>קונים ומוכרים בתוך היישוב</p>
+        <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
       </header>
 
       <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
         <button 
           onClick={() => setShowForm(true)} 
-          style={{ width: "100%", padding: "15px", marginBottom: "20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
+          style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
         >
           + פרסם מודעה חדשה
         </button>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {ads.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
               <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
-              אין מודעות כרגע. תהיה הראשון לפרסם!
+              אין מודעות כרגע.
             </div>
           ) : (
             ads.map(ad => (
-              <div key={ad.id} style={{ background: "#fff", padding: "15px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <h3 style={{ fontSize: "16px", fontWeight: "bold" }}>{ad.title}</h3>
-                  <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>₪{ad.price}</span>
-                </div>
+              <div key={ad.id} style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)" }}>
+                {/* הצגת תמונה אם קיימת */}
+                {ad.image && (
+                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
+                )}
                 
-                <p style={{ color: "#64748b", fontSize: "12px", marginTop: "10px" }}>פורסם: {ad.date || "היום"}</p>
-                
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
-                  <a href={`https://wa.me/972${ad.tel.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: "20px", textDecoration: "none", fontSize: "13px", fontWeight: "bold" }}>
-                    💬 שלח הודעה למוכר
-                  </a>
+                <div style={{ padding: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                    <div>
+                      <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", marginBottom: "6px" }}>{ad.category}</span>
+                      <h3 style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2" }}>{ad.title}</h3>
+                    </div>
+                    <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 10px", borderRadius: "8px", fontSize: "16px", fontWeight: "900" }}>₪{ad.price}</span>
+                  </div>
                   
-                  {/* הצגת כפתור המחיקה רק אם המזהה תואם למזהה של המכשיר */}
-                  {ad.authorId === deviceId && (
-                    <button onClick={() => handleDeleteAd(ad.id)} style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}>
-                      🗑️ מחק מודעה
-                    </button>
-                  )}
+                  <p style={{ color: "#475569", fontSize: "14px", marginTop: "10px", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>{ad.desc}</p>
+                  <p style={{ color: "#94a3b8", fontSize: "12px", marginTop: "12px" }}>פורסם ב: {ad.date || "היום"}</p>
+                  
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "15px", borderTop: "1px solid #f1f5f9", paddingTop: "15px" }}>
+                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#25d366", color: "#fff", padding: "10px 18px", borderRadius: "50px", textDecoration: "none", fontSize: "14px", fontWeight: "bold", boxShadow: "0 2px 8px rgba(37,211,102,0.3)" }}>
+                      💬 שלח הודעה למוכר
+                    </a>
+                    
+                    {ad.authorId === deviceId && (
+                      <button onClick={() => handleDeleteAd(ad.id)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>
+                        🗑️ מחק מודעה
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))
@@ -471,39 +444,51 @@ function MarketView({ onBack }) {
       </main>
 
       {showForm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-          <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a" }}>מודעה חדשה</h2>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
+          <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a", fontWeight: "900" }}>פרסום מודעה חדשה</h2>
             
-            <input 
-              placeholder="מה תרצה למכור?" 
-              value={newAd.title} 
-              onChange={e => setNewAd({...newAd, title: e.target.value})}
-              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} 
-            />
+            <div style={{ marginBottom: "15px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>כותרת המודעה *</label>
+              <input placeholder="למשל: אופני הרים לגבר מצב חדש" value={newAd.title} onChange={e => setNewAd({...newAd, title: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px" }} />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>קטגוריה *</label>
+                <select value={newAd.category} onChange={e => setNewAd({...newAd, category: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", backgroundColor: "#fff" }}>
+                  {MARKET_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מחיר (₪) *</label>
+                <input placeholder="למשל: 450" type="number" value={newAd.price} onChange={e => setNewAd({...newAd, price: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px" }} />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "15px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>פירוט *</label>
+              <textarea placeholder="פרט על המוצר, מצבו וכל מידע חשוב אחר..." value={newAd.desc} onChange={e => setNewAd({...newAd, desc: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", minHeight: "80px", resize: "vertical" }} />
+            </div>
+
+            <div style={{ marginBottom: "15px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>תמונה (אופציונלי)</label>
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: "100%", padding: "10px", border: "1px dashed #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "13px", background: "#f8fafc" }} />
+              {newAd.image && <div style={{ marginTop: "10px", textAlign: "center" }}><img src={newAd.image} alt="תצוגה מקדימה" style={{ height: "60px", borderRadius: "6px" }}/></div>}
+            </div>
+
+            <div style={{ marginBottom: "25px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מספר טלפון *</label>
+              <input placeholder="05XXXXXXXX" type="tel" value={newAd.tel} onChange={e => setNewAd({...newAd, tel: e.target.value})} maxLength={10} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", direction: "ltr", textAlign: "right" }} />
+              <span style={{ fontSize: "11px", color: "#94a3b8" }}>10 ספרות, חייב להתחיל ב-05</span>
+            </div>
             
-            <input 
-              placeholder="מחיר (בשקלים)" 
-              type="number" 
-              value={newAd.price} 
-              onChange={e => setNewAd({...newAd, price: e.target.value})}
-              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} 
-            />
-            
-            <input 
-              placeholder="מספר טלפון (לחזרה בוואטסאפ)" 
-              type="tel" 
-              value={newAd.tel} 
-              onChange={e => setNewAd({...newAd, tel: e.target.value})}
-              style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "20px", fontFamily: "Heebo" }} 
-            />
-            
-            <button type="submit" disabled={loading} style={{ width: "100%", padding: "12px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginBottom: "10px" }}>
-              {loading ? "מפרסם..." : "פרסם מודעה"}
+            <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "16px", cursor: "pointer", marginBottom: "10px", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
+              {loading ? "מפרסם..." : "פרסם עכשיו בלוח"}
             </button>
             
-            <button type="button" onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
-              ביטול
+            <button type="button" onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "transparent", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+              ביטול וחזרה
             </button>
           </form>
         </div>
