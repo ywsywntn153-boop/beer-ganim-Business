@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (ללא שינוי - נשאר בול כמו שביקשת)
+// 1. נתוני העסקים (ללא שינוי)
 // ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -284,7 +284,7 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView (הגרסה המקצועית והחדשה)
+// 3. מסך השוק - MarketView
 // ─────────────────────────────────────────────────────────────────────────────
 const MARKET_CATEGORIES = ["יד שניה", "רכב", "נדל״ן", "דרושים", "מסירה בחינם", "שונות"];
 
@@ -292,8 +292,8 @@ function MarketView({ onBack }) {
   const [ads, setAds] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedAd, setSelectedAd] = useState(null); // שמירת המודעה שנבחרה לפתיחה מורחבת
   
-  // הוספת שדות חדשים: קטגוריה, תיאור, תמונה
   const [newAd, setNewAd] = useState({ title: "", category: "יד שניה", price: "", desc: "", tel: "", image: "" });
 
   const [deviceId] = useState(() => {
@@ -314,11 +314,10 @@ function MarketView({ onBack }) {
     return () => unsubscribe();
   }, []);
 
-  // טיפול בהעלאת תמונה (קריאת הקובץ והפיכתו למחרוזת שאפשר לשמור בפיירבייס)
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // הגבלה ל-2 מגהבייט למניעת קריסה
+      if (file.size > 2 * 1024 * 1024) { 
         alert("התמונה גדולה מדי! אנא בחר תמונה עד 2MB");
         return;
       }
@@ -332,15 +331,12 @@ function MarketView({ onBack }) {
 
   const handleAddAd = async (e) => {
     e.preventDefault();
-    
-    // בדיקות תקינות לפני שליחה
     if (!newAd.title || !newAd.price || !newAd.tel || !newAd.desc) {
       alert("נא למלא את כל שדות החובה");
       return;
     }
 
-    // בדיקת מספר טלפון (מתחיל ב-05 ויש בו בדיוק 10 ספרות)
-    const cleanPhone = newAd.tel.replace(/\D/g, ""); // מנקה רווחים או מקפים אם המשתמש שם
+    const cleanPhone = newAd.tel.replace(/\D/g, "");
     if (!/^05\d{8}$/.test(cleanPhone)) {
       alert("מספר הטלפון לא תקין. יש להזין מספר נייד בעל 10 ספרות שמתחיל ב-05.");
       return;
@@ -353,7 +349,7 @@ function MarketView({ onBack }) {
         category: newAd.category,
         price: newAd.price,
         desc: newAd.desc,
-        tel: cleanPhone, // שומרים את המספר הנקי
+        tel: cleanPhone,
         image: newAd.image,
         date: new Date().toLocaleDateString("he-IL"),
         authorId: deviceId,
@@ -368,10 +364,12 @@ function MarketView({ onBack }) {
     setLoading(false);
   };
 
-  const handleDeleteAd = async (id) => {
+  const handleDeleteAd = async (id, e) => {
+    if (e) e.stopPropagation(); // מונע פתיחה של המודעה כשלוחצים על כפתור המחיקה
     if (window.confirm("האם אתה בטוח שברצונך למחוק מודעה זו?")) {
       try {
         await deleteDoc(doc(db, "ads", id));
+        if (selectedAd && selectedAd.id === id) setSelectedAd(null); // סגירת החלון המורחב אם המודעה נמחקה
       } catch (error) {
         console.error("Error deleting doc:", error);
         alert("שגיאה במחיקת המודעה.");
@@ -380,7 +378,7 @@ function MarketView({ onBack }) {
   };
 
   return (
-    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
+    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", paddingBottom: "40px" }}>
       <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
         ➔ חזור למסך הראשי
       </button>
@@ -407,8 +405,11 @@ function MarketView({ onBack }) {
             </div>
           ) : (
             ads.map(ad => (
-              <div key={ad.id} style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)" }}>
-                {/* הצגת תמונה אם קיימת */}
+              <div 
+                key={ad.id} 
+                onClick={() => setSelectedAd(ad)} // הפיכת הכרטיסייה כולה ללחיצה
+                style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s" }}
+              >
                 {ad.image && (
                   <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
                 )}
@@ -422,18 +423,20 @@ function MarketView({ onBack }) {
                     <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 10px", borderRadius: "8px", fontSize: "16px", fontWeight: "900" }}>₪{ad.price}</span>
                   </div>
                   
-                  <p style={{ color: "#475569", fontSize: "14px", marginTop: "10px", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>{ad.desc}</p>
-                  <p style={{ color: "#94a3b8", fontSize: "12px", marginTop: "12px" }}>פורסם ב: {ad.date || "היום"}</p>
+                  {/* מציגים רק חלק מהתיאור במסך הראשי */}
+                  <p style={{ color: "#475569", fontSize: "14px", marginTop: "10px", lineHeight: "1.5", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
                   
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "15px", borderTop: "1px solid #f1f5f9", paddingTop: "15px" }}>
-                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#25d366", color: "#fff", padding: "10px 18px", borderRadius: "50px", textDecoration: "none", fontSize: "14px", fontWeight: "bold", boxShadow: "0 2px 8px rgba(37,211,102,0.3)" }}>
+                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => e.stopPropagation()} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#25d366", color: "#fff", padding: "10px 18px", borderRadius: "50px", textDecoration: "none", fontSize: "14px", fontWeight: "bold", boxShadow: "0 2px 8px rgba(37,211,102,0.3)" }}>
                       💬 שלח הודעה למוכר
                     </a>
                     
-                    {ad.authorId === deviceId && (
-                      <button onClick={() => handleDeleteAd(ad.id)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>
+                    {ad.authorId === deviceId ? (
+                      <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>
                         🗑️ מחק מודעה
                       </button>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "bold" }}>קרא עוד ➔</span>
                     )}
                   </div>
                 </div>
@@ -443,6 +446,48 @@ function MarketView({ onBack }) {
         </div>
       </main>
 
+      {/* ---- חלון פופ-אפ להצגת המודעה בגדול ---- */}
+      {selectedAd && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.85)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: "20px" }} onClick={() => setSelectedAd(null)}>
+          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedAd(null)} style={{ position: "absolute", top: "15px", right: "15px", background: "rgba(0,0,0,0.5)", color: "#fff", border: "none", borderRadius: "50%", width: "36px", height: "36px", fontSize: "16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>✕</button>
+
+            {selectedAd.image && (
+              <img src={selectedAd.image} alt={selectedAd.title} style={{ width: "100%", maxHeight: "350px", objectFit: "contain", background: "#f1f5f9", borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }} />
+            )}
+
+            <div style={{ padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+                <div>
+                  <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", marginBottom: "8px" }}>{selectedAd.category}</span>
+                  <h2 style={{ fontSize: "24px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2" }}>{selectedAd.title}</h2>
+                </div>
+                <span style={{ background: "#dbeafe", color: "#1e40af", padding: "8px 14px", borderRadius: "10px", fontSize: "20px", fontWeight: "900", flexShrink: 0, marginLeft: "10px" }}>₪{selectedAd.price}</span>
+              </div>
+              
+              <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "12px", marginBottom: "20px" }}>
+                <p style={{ color: "#334155", fontSize: "16px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{selectedAd.desc}</p>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>
+                <span>פורסם בתאריך: {selectedAd.date || "היום"}</span>
+                <span>מספר טלפון: {selectedAd.tel}</span>
+              </div>
+              
+              <div style={{ display: "flex", gap: "10px", flexDirection: "column" }}>
+                <a href={`https://wa.me/972${selectedAd.tel.replace(/^0/, "")}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#25d366", color: "#fff", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
+                  💬 שלח הודעת וואטסאפ למוכר
+                </a>
+                <a href={`tel:${selectedAd.tel}`} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#f1f5f9", color: "#334155", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold" }}>
+                  📞 התקשר למוכר
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---- חלון פופ-אפ להוספת מודעה ---- */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
           <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto" }}>
@@ -456,8 +501,9 @@ function MarketView({ onBack }) {
             <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>קטגוריה *</label>
-                <select value={newAd.category} onChange={e => setNewAd({...newAd, category: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", backgroundColor: "#fff" }}>
-                  {MARKET_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                {/* כאן הוספתי הגדרת צבעים מפורשת כדי לפתור את בעיית הטקסט הלבן */}
+                <select value={newAd.category} onChange={e => setNewAd({...newAd, category: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", backgroundColor: "#fff", color: "#0f172a" }}>
+                  {MARKET_CATEGORIES.map(cat => <option key={cat} value={cat} style={{ color: "#0f172a", backgroundColor: "#fff" }}>{cat}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
