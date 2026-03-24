@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
 // --- ייבוא פונקציות של פיירבייס ---
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 
 // --- החיבור האישי שלך ל-Firebase ---
 const firebaseConfig = {
@@ -224,7 +224,7 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. קומפוננטת העסקים - BusinessesView (עיצוב מקורי שמור)
+// 2. קומפוננטת העסקים - BusinessesView
 // ─────────────────────────────────────────────────────────────────────────────
 function BusinessesView({ onBack }) {
   const [search, setSearch] = useState("");
@@ -352,7 +352,7 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView (מחובר למסד נתונים פיירבייס!)
+// 3. מסך השוק - MarketView 
 // ─────────────────────────────────────────────────────────────────────────────
 function MarketView({ onBack }) {
   const [ads, setAds] = useState([]);
@@ -360,7 +360,16 @@ function MarketView({ onBack }) {
   const [newAd, setNewAd] = useState({ title: "", price: "", tel: "" });
   const [loading, setLoading] = useState(false);
 
-  // משיכת הנתונים מפיירבייס בזמן אמת
+  // יצירת מזהה ייחודי למכשיר כדי לאפשר מחיקה
+  const [deviceId] = useState(() => {
+    let id = localStorage.getItem("beerGanimDeviceId");
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 15);
+      localStorage.setItem("beerGanimDeviceId", id);
+    }
+    return id;
+  });
+
   useEffect(() => {
     const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -370,7 +379,6 @@ function MarketView({ onBack }) {
     return () => unsubscribe();
   }, []);
 
-  // פונקציה לשליחת מודעה חדשה לפיירבייס
   const handleAddAd = async (e) => {
     e.preventDefault();
     if (!newAd.title || !newAd.price || !newAd.tel) {
@@ -384,15 +392,28 @@ function MarketView({ onBack }) {
         price: newAd.price,
         tel: newAd.tel,
         date: new Date().toLocaleDateString("he-IL"),
+        authorId: deviceId, // שמירת המזהה של מי שפרסם
         createdAt: serverTimestamp()
       });
       setShowForm(false);
       setNewAd({ title: "", price: "", tel: "" });
     } catch (error) {
       console.error("Error adding doc:", error);
-      alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס על מצב Test Mode כמו שהוסבר.");
+      alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס.");
     }
     setLoading(false);
+  };
+
+  // פונקציית המחיקה החדשה
+  const handleDeleteAd = async (id) => {
+    if (window.confirm("האם אתה בטוח שברצונך למחוק מודעה זו?")) {
+      try {
+        await deleteDoc(doc(db, "ads", id));
+      } catch (error) {
+        console.error("Error deleting doc:", error);
+        alert("שגיאה במחיקת המודעה.");
+      }
+    }
   };
 
   return (
@@ -428,11 +449,20 @@ function MarketView({ onBack }) {
                   <h3 style={{ fontSize: "16px", fontWeight: "bold" }}>{ad.title}</h3>
                   <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>₪{ad.price}</span>
                 </div>
+                
                 <p style={{ color: "#64748b", fontSize: "12px", marginTop: "10px" }}>פורסם: {ad.date || "היום"}</p>
-                <div style={{ marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
                   <a href={`https://wa.me/972${ad.tel.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: "20px", textDecoration: "none", fontSize: "13px", fontWeight: "bold" }}>
                     💬 שלח הודעה למוכר
                   </a>
+                  
+                  {/* הצגת כפתור המחיקה רק אם המזהה תואם למזהה של המכשיר */}
+                  {ad.authorId === deviceId && (
+                    <button onClick={() => handleDeleteAd(ad.id)} style={{ background: "transparent", border: "none", color: "#ef4444", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}>
+                      🗑️ מחק מודעה
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -440,7 +470,6 @@ function MarketView({ onBack }) {
         </div>
       </main>
 
-      {/* פופ-אפ להוספת מודעה */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
           <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
