@@ -323,19 +323,45 @@ function MarketView({ onBack }) {
     return () => unsubscribe();
   }, []);
 
+  // מנגנון הכיווץ האוטומטי לתמונות!
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { 
-        alert("התמונה גדולה מדי! אנא בחר תמונה עד 2MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewAd({ ...newAd, image: reader.result });
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // נקטין את התמונה אם היא ענקית (מקסימום 800 פיקסלים רוחב/גובה)
+        const MAX_SIZE = 800;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // כיווץ לפורמט JPEG באיכות של 60% (לא שמים לב להבדל במסך קטן, אבל שוקל כלום)
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
+        setNewAd({ ...newAd, image: compressedDataUrl });
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file); // קורא את הקובץ המקורי ומתחיל את שרשרת הכיווץ
   };
 
   const handleAddAd = async (e) => {
