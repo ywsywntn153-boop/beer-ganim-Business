@@ -1,21 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
-import Fuse from "fuse.js"; // וודא שהתקנת: npm install fuse.js
+import Fuse from "fuse.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (העתק מדויק של מה ששלחת)
-// ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
-  "יופי וטיפוח":      { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
-  "בריאות ורפואה":    { emoji: "🩺", color: "#059669", bg: "#ecfdf5" },
-  "כושר ופנאי":       { emoji: "🏋️", color: "#2563eb", bg: "#eff6ff" },
-  "בניה ותחזוקה":     { emoji: "🔧", color: "#d97706", bg: "#fffbeb" },
-  "מקצועות חופשיים": { emoji: "⚖️", color: "#7c3aed", bg: "#f5f3ff" },
-  "מזון ואוכל":       { emoji: "🍕", color: "#dc2626", bg: "#fff1f2" },
-  "אירועים וצילום":   { emoji: "📸", color: "#0891b2", bg: "#ecfeff" },
-  "חינוך":            { emoji: "📚", color: "#b45309", bg: "#fef3c7" },
-  "טכנולוגיה ועסקים": { emoji: "💻", color: "#4f46e5", bg: "#eef2ff" },
-  "קניות ושירותים":  { emoji: "🛍️", color: "#be185d", bg: "#fdf2f8" },
-  "קהילה":            { emoji: "🏘️", color: "#475569", bg: "#f1f5f9" },
+  "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
+  "בריאות ורפואה":      { emoji: "🩺", color: "#059669", bg: "#ecfdf5" },
+  "כושר ופנאי":         { emoji: "🏋️", color: "#2563eb", bg: "#eff6ff" },
+  "בניה ותחזוקה":       { emoji: "🔧", color: "#d97706", bg: "#fffbeb" },
+  "מקצועות חופשיים":   { emoji: "⚖️", color: "#7c3aed", bg: "#f5f3ff" },
+  "מזון ואוכל":         { emoji: "🍕", color: "#dc2626", bg: "#fff1f2" },
+  "אירועים וצילום":     { emoji: "📸", color: "#0891b2", bg: "#ecfeff" },
+  "חינוך":              { emoji: "📚", color: "#b45309", bg: "#fef3c7" },
+  "טכנולוגיה ועסקים":  { emoji: "💻", color: "#4f46e5", bg: "#eef2ff" },
+  "קניות ושירותים":    { emoji: "🛍️", color: "#be185d", bg: "#fdf2f8" },
+  "קהילה":              { emoji: "🏘️", color: "#475569", bg: "#f1f5f9" },
 };
 
 const BUSINESSES = [
@@ -206,7 +203,7 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. קומפוננטת העסקים - BusinessesView (הקוד שלך בדיוק, רק במעטפת)
+// 2. קומפוננטת העסקים - BusinessesView
 // ─────────────────────────────────────────────────────────────────────────────
 function BusinessesView({ onBack }) {
   const [search, setSearch] = useState("");
@@ -246,7 +243,37 @@ function BusinessesView({ onBack }) {
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f7f3ed", color: "#1e140a" }}>
-      {/* כפתור חזור חדש */}
+      {/* ⚠️ כאן הוחזר בלוק העיצוב המקורי שלך! ⚠️ */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        .si{width:100%;padding:13px 18px 13px 46px;border:2px solid #e8d5b7;border-radius:50px;font-size:16px;font-family:'Heebo',sans-serif;background:#fff;outline:none;transition:all .25s;color:#1e140a;direction:rtl}
+        .si:focus{border-color:#c4651a;box-shadow:0 0 0 3px rgba(196,101,26,.13)}
+        .si::placeholder{color:#b09070}
+        .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #e8d5b7;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#7a5c3a;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+        .cc:hover{border-color:#c4651a;color:#c4651a}
+        .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
+        .cc.open-now { border-color: #16a34a; color: #16a34a; }
+        .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
+        .card{background:#fff;border-radius:18px;padding:18px;border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden}
+        .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
+        .ab{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
+        .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
+        .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
+        .ab.o{background:#fff;border:2px solid #e8d5b7;color:#555}
+        .ab.o:hover{border-color:#c4651a;background:#fff9f4}
+        .dr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:1px solid #f5ede0;font-size:13px}
+        .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
+        .fa.vis{opacity:1;transform:translateY(0)}
+        @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+        .ex{animation:fu .22s ease}
+        .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
+        .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
+        @media(max-width:600px){.grid{grid-template-columns:1fr!important}}
+        ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
+      `}</style>
+
+      {/* כפתור חזור */}
       <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
         ➔ חזור למסך הראשי
       </button>
@@ -306,12 +333,11 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView (שלב א: רק עיצוב בלי מסד נתונים עדיין)
+// 3. מסך השוק - MarketView
 // ─────────────────────────────────────────────────────────────────────────────
 function MarketView({ onBack }) {
   const [showForm, setShowForm] = useState(false);
 
-  // מודעות דמה (Fake Data) רק כדי לראות איך זה ייראה
   const dummyAds = [
     { id: 1, title: "אופני הרים לגבר מצב חדש", price: "450", tel: "050-1234567", date: "היום" },
     { id: 2, title: "ספרי לימוד לכיתה י' במצב מעולה", price: "100", tel: "054-9876543", date: "אתמול" },
@@ -356,7 +382,6 @@ function MarketView({ onBack }) {
         </div>
       </main>
 
-      {/* פופ-אפ להוספת מודעה (רק עיצוב בינתיים) */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
           <div style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
@@ -374,7 +399,7 @@ function MarketView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. מסך הבית - HomeView (כניסה לאפליקציה)
+// 4. מסך הבית - HomeView
 // ─────────────────────────────────────────────────────────────────────────────
 function HomeView({ onNavigate }) {
   return (
@@ -438,18 +463,10 @@ function HomeView({ onNavigate }) {
 // 5. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [currentView, setCurrentView] = useState("home"); // "home" | "businesses" | "market"
+  const [currentView, setCurrentView] = useState("home"); 
 
   return (
     <>
-      {/* סגנונות גלובליים משותפים */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-      `}</style>
-
       {currentView === "home" && <HomeView onNavigate={setCurrentView} />}
       {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} />}
       {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} />}
