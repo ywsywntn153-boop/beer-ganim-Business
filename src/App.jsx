@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (ללא שינוי)
+// 1. נתוני העסקים (ללא שינוי - מחר נעביר אותם למסד נתונים!)
 // ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -425,6 +425,18 @@ function MarketView({ onBack }) {
       </header>
 
       <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
+        
+        {/* --- הסבר על הלוח שהוספתי לבקשתך --- */}
+        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "12px", padding: "16px", marginBottom: "20px", color: "#1e3a8a", fontSize: "14px", lineHeight: "1.6", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+          <strong style={{ fontSize: "16px", display: "block", marginBottom: "5px" }}>👋 ברוכים הבאים ללוח היישובי!</strong>
+          כאן תוכלו לפרסם חפצים למכירה, למסור ציוד בחינם, או לחפש דברים שאתם צריכים מחברים בקהילה שלנו בבאר גנים.
+          <ul style={{ paddingRight: "20px", marginTop: "8px", marginBottom: "0", color: "#1e40af" }}>
+            <li>הפרסום פתוח לכולם ובחינם לגמרי.</li>
+            <li>מומלץ להעלות תמונה ברורה לכל מודעה.</li>
+            <li>המודעות מסודרות תמיד מהכי חדש להכי ישן.</li>
+          </ul>
+        </div>
+
         <button 
           onClick={() => setShowForm(true)} 
           style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
