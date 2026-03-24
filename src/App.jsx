@@ -286,15 +286,24 @@ function BusinessesView({ onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. מסך השוק - MarketView
 // ─────────────────────────────────────────────────────────────────────────────
-const MARKET_CATEGORIES = ["יד שניה", "רכב", "נדל״ן", "דרושים", "מסירה בחינם", "שונות"];
+const MARKET_CATEGORIES = [
+  "ריהוט לבית ולגינה",
+  "חשמל ואלקטרוניקה",
+  "ספרים ולימודים",
+  "ספורט ופנאי",
+  "לתינוק ולילד",
+  "ביגוד ואקססוריז",
+  "מסירה בחינם",
+  "שונות"
+];
 
 function MarketView({ onBack }) {
   const [ads, setAds] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedAd, setSelectedAd] = useState(null); // שמירת המודעה שנבחרה לפתיחה מורחבת
+  const [selectedAd, setSelectedAd] = useState(null); 
   
-  const [newAd, setNewAd] = useState({ title: "", category: "יד שניה", price: "", desc: "", tel: "", image: "" });
+  const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
 
   const [deviceId] = useState(() => {
     let id = localStorage.getItem("beerGanimDeviceId");
@@ -356,7 +365,7 @@ function MarketView({ onBack }) {
         createdAt: serverTimestamp()
       });
       setShowForm(false);
-      setNewAd({ title: "", category: "יד שניה", price: "", desc: "", tel: "", image: "" });
+      setNewAd({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
     } catch (error) {
       console.error("Error adding doc:", error);
       alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס.");
@@ -365,11 +374,11 @@ function MarketView({ onBack }) {
   };
 
   const handleDeleteAd = async (id, e) => {
-    if (e) e.stopPropagation(); // מונע פתיחה של המודעה כשלוחצים על כפתור המחיקה
+    if (e) e.stopPropagation(); 
     if (window.confirm("האם אתה בטוח שברצונך למחוק מודעה זו?")) {
       try {
         await deleteDoc(doc(db, "ads", id));
-        if (selectedAd && selectedAd.id === id) setSelectedAd(null); // סגירת החלון המורחב אם המודעה נמחקה
+        if (selectedAd && selectedAd.id === id) setSelectedAd(null); 
       } catch (error) {
         console.error("Error deleting doc:", error);
         alert("שגיאה במחיקת המודעה.");
@@ -407,7 +416,7 @@ function MarketView({ onBack }) {
             ads.map(ad => (
               <div 
                 key={ad.id} 
-                onClick={() => setSelectedAd(ad)} // הפיכת הכרטיסייה כולה ללחיצה
+                onClick={() => setSelectedAd(ad)} 
                 style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s" }}
               >
                 {ad.image && (
@@ -423,7 +432,6 @@ function MarketView({ onBack }) {
                     <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 10px", borderRadius: "8px", fontSize: "16px", fontWeight: "900" }}>₪{ad.price}</span>
                   </div>
                   
-                  {/* מציגים רק חלק מהתיאור במסך הראשי */}
                   <p style={{ color: "#475569", fontSize: "14px", marginTop: "10px", lineHeight: "1.5", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
                   
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "15px", borderTop: "1px solid #f1f5f9", paddingTop: "15px" }}>
@@ -495,37 +503,36 @@ function MarketView({ onBack }) {
             
             <div style={{ marginBottom: "15px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>כותרת המודעה *</label>
-              <input placeholder="למשל: אופני הרים לגבר מצב חדש" value={newAd.title} onChange={e => setNewAd({...newAd, title: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px" }} />
+              <input placeholder="למשל: ספרי לימוד כיתה י'" value={newAd.title} onChange={e => setNewAd({...newAd, title: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a" }} />
             </div>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>קטגוריה *</label>
-                {/* כאן הוספתי הגדרת צבעים מפורשת כדי לפתור את בעיית הטקסט הלבן */}
                 <select value={newAd.category} onChange={e => setNewAd({...newAd, category: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", backgroundColor: "#fff", color: "#0f172a" }}>
                   {MARKET_CATEGORIES.map(cat => <option key={cat} value={cat} style={{ color: "#0f172a", backgroundColor: "#fff" }}>{cat}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מחיר (₪) *</label>
-                <input placeholder="למשל: 450" type="number" value={newAd.price} onChange={e => setNewAd({...newAd, price: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px" }} />
+                <input placeholder="למשל: 450" type="number" value={newAd.price} onChange={e => setNewAd({...newAd, price: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a" }} />
               </div>
             </div>
 
             <div style={{ marginBottom: "15px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>פירוט *</label>
-              <textarea placeholder="פרט על המוצר, מצבו וכל מידע חשוב אחר..." value={newAd.desc} onChange={e => setNewAd({...newAd, desc: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", minHeight: "80px", resize: "vertical" }} />
+              <textarea placeholder="פרט על המוצר, מצבו וכל מידע חשוב אחר..." value={newAd.desc} onChange={e => setNewAd({...newAd, desc: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a", minHeight: "80px", resize: "vertical" }} />
             </div>
 
             <div style={{ marginBottom: "15px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>תמונה (אופציונלי)</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: "100%", padding: "10px", border: "1px dashed #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "13px", background: "#f8fafc" }} />
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: "100%", padding: "10px", border: "1px dashed #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "13px", background: "#f8fafc", color: "#0f172a" }} />
               {newAd.image && <div style={{ marginTop: "10px", textAlign: "center" }}><img src={newAd.image} alt="תצוגה מקדימה" style={{ height: "60px", borderRadius: "6px" }}/></div>}
             </div>
 
             <div style={{ marginBottom: "25px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מספר טלפון *</label>
-              <input placeholder="05XXXXXXXX" type="tel" value={newAd.tel} onChange={e => setNewAd({...newAd, tel: e.target.value})} maxLength={10} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", direction: "ltr", textAlign: "right" }} />
+              <input placeholder="05XXXXXXXX" type="tel" value={newAd.tel} onChange={e => setNewAd({...newAd, tel: e.target.value})} maxLength={10} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a", direction: "ltr", textAlign: "right" }} />
               <span style={{ fontSize: "11px", color: "#94a3b8" }}>10 ספרות, חייב להתחיל ב-05</span>
             </div>
             
@@ -596,7 +603,7 @@ function HomeView({ onNavigate }) {
       <button className="home-btn btn-market" onClick={() => onNavigate("market")}>
         <span style={{ fontSize: "40px" }}>🛒</span>
         <span style={{ fontSize: "22px", fontWeight: "800" }}>שוק באר גנים</span>
-        <span style={{ fontSize: "14px", color: "#94a3b8" }}>יד שניה, דרושים ומכירות</span>
+        <span style={{ fontSize: "14px", color: "#94a3b8" }}>יד שניה, קהילה ומכירות</span>
       </button>
 
       <p style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a" }}>פותח ע"י יונתן יוסף</p>
