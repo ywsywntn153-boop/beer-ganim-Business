@@ -1,116 +1,119 @@
 import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js"; // וודא שהתקנת: npm install fuse.js
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. נתוני העסקים (העתק מדויק של מה ששלחת)
+// ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":      { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
-  "בריאות ורפואה":      { emoji: "🩺", color: "#059669", bg: "#ecfdf5" },
-  "כושר ופנאי":         { emoji: "🏋️", color: "#2563eb", bg: "#eff6ff" },
-  "בניה ותחזוקה":       { emoji: "🔧", color: "#d97706", bg: "#fffbeb" },
-  "מקצועות חופשיים":   { emoji: "⚖️", color: "#7c3aed", bg: "#f5f3ff" },
-  "מזון ואוכל":         { emoji: "🍕", color: "#dc2626", bg: "#fff1f2" },
-  "אירועים וצילום":     { emoji: "📸", color: "#0891b2", bg: "#ecfeff" },
-  "חינוך":              { emoji: "📚", color: "#b45309", bg: "#fef3c7" },
-  "טכנולוגיה ועסקים":  { emoji: "💻", color: "#4f46e5", bg: "#eef2ff" },
-  "קניות ושירותים":    { emoji: "🛍️", color: "#be185d", bg: "#fdf2f8" },
-  "קהילה":              { emoji: "🏘️", color: "#475569", bg: "#f1f5f9" },
+  "בריאות ורפואה":    { emoji: "🩺", color: "#059669", bg: "#ecfdf5" },
+  "כושר ופנאי":       { emoji: "🏋️", color: "#2563eb", bg: "#eff6ff" },
+  "בניה ותחזוקה":     { emoji: "🔧", color: "#d97706", bg: "#fffbeb" },
+  "מקצועות חופשיים": { emoji: "⚖️", color: "#7c3aed", bg: "#f5f3ff" },
+  "מזון ואוכל":       { emoji: "🍕", color: "#dc2626", bg: "#fff1f2" },
+  "אירועים וצילום":   { emoji: "📸", color: "#0891b2", bg: "#ecfeff" },
+  "חינוך":            { emoji: "📚", color: "#b45309", bg: "#fef3c7" },
+  "טכנולוגיה ועסקים": { emoji: "💻", color: "#4f46e5", bg: "#eef2ff" },
+  "קניות ושירותים":  { emoji: "🛍️", color: "#be185d", bg: "#fdf2f8" },
+  "קהילה":            { emoji: "🏘️", color: "#475569", bg: "#f1f5f9" },
 };
 
 const BUSINESSES = [
   // ═══ קהילה ═══
-  { id: 1,  name: "דואר בבאר גנים",           cat: "קהילה",            tel: "",              hours: "ראשון ורביעי 17:00–19:00", addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סניף דואר ישראל ביישוב" },
+  { id: 1,  name: "דואר בבאר גנים",          cat: "קהילה",            tel: "",              hours: "ראשון ורביעי 17:00–19:00", addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סניף דואר ישראל ביישוב" },
   { id: 2,  name: "המכולת היישובית",          cat: "מזון ואוכל",       tel: "",              hours: "א׳–ה׳ 06:30–21:00 | שישי 06:30–15:30 | שבת סגור", addr: "סביון 20, באר גנים", site: "", ig: "", fb: "", desc: "מכולת שכונתית – מוצרי יומיום טריים" },
   { id: 3,  name: "ספריה ניצן",                cat: "קהילה",            tel: "",              hours: "א,ב,ד 15:00–18:30 | ב,ד 09:00–12:30", addr: "באר גנים", site: "", ig: "", fb: "", desc: "ספרייה ציבורית ביישוב" },
 
   // ═══ מזון ═══
   { id: 4,  name: "פיצה פארטי",                cat: "מזון ואוכל",       tel: "052-689-9733",  hours: "א׳–ה׳ 15:30–23:00 | שבת 17:30–23:00 | שישי סגור", addr: "באר גנים 1", site: "", ig: "", fb: "", desc: "פיצריה מקומית – משלוחים ואיסוף עצמי" },
-  { id: 5,  name: "השניצל של ציפי",            cat: "מזון ואוכל",       tel: "054-6671707",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חלת שניצל מפנקת ליום שיש" },
-  { id: 6,  name: "קובי אירועי בוטיק – שף פרטי", cat: "מזון ואוכל",  tel: "054-7372734",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שף פרטי בשרי לאירועים ובוטיק" },
+  { id: 5,  name: "השניצל של ציפי",            cat: "מזון ואוכל",       tel: "054-6671707",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חלת שניצל מפנקת ליום שיש" },
+  { id: 6,  name: "קובי אירועי בוטיק – שף פרטי", cat: "מזון ואוכל",  tel: "054-7372734",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שף פרטי בשרי לאירועים ובוטיק" },
 
   // ═══ יופי וטיפוח ═══
-  { id: 7,  name: "נלו דה לאון – מספרת גברים", cat: "יופי וטיפוח",     tel: "053-2838100",   hours: "",                addr: "רימון 11, באר גנים",       site: "", ig: "https://www.instagram.com/barber_nelo", fb: "", desc: "מספרת גברים וילדים" },
-  { id: 8,  name: "גלית עיצוב שיער",            cat: "יופי וטיפוח",     tel: "054-7755845",   hours: "",                addr: "מלכית 70, באר גנים",       site: "", ig: "", fb: "", desc: "מספרה לנשים – עיצוב שיער וצבע" },
-  { id: 9,  name: "חיה – החלקות שיער עד הבית", cat: "יופי וטיפוח",   tel: "052-5253772",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "החלקת שיער מינרלי עד בית הלקוחה" },
-  { id: 10, name: "LIOR HODAYA – עיצוב גבות",   cat: "יופי וטיפוח",     tel: "050-6705122",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "https://wa.me/972506705122", desc: "עיצוב גבות טבעיות, הרמת ריסים, מיקרובליידינג, שעוות גוף" },
-  { id: 11, name: "נטע יצחק – פדיקור ומניקור", cat: "יופי וטיפוח",     tel: "053-5236763",   hours: "",                addr: "גפן 7, באר גנים",          site: "https://cal.mk/f3NfAj", ig: "", fb: "https://www.facebook.com/share/1PZR24QEwT/", desc: "פדיקור רפואי, פדיקור טיפולי, ציפורן חודרנית, לק ג'ל" },
-  { id: 12, name: "נוי אמר – ציפורניים",        cat: "יופי וטיפוח",     tel: "",              hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בניית ציפורניים ולק ג'ל" },
-  { id: 13, name: "ליאת – בניית ציפורניים",      cat: "יופי וטיפוח",     tel: "",              hours: "",                addr: "החריש 15, באר גנים",       site: "", ig: "", fb: "", desc: "בניית ציפורניים ולק ג'ל" },
-  { id: 14, name: "ליטל בן חמו קוסמטיקה",      cat: "יופי וטיפוח",     tel: "",              hours: "",                addr: "אדוה, באר גנים",            site: "", ig: "", fb: "", desc: "קליניקה לטיפולי יופי, אקנה ואנטי-אייג'ינג" },
-  { id: 15, name: "אמילי – טיפולי פנים",        cat: "יופי וטיפוח",     tel: "050-635-5660",  hours: "",                addr: "באר גנים",                  site: "", ig: "Emily_atia", fb: "", desc: "טיפולי פנים וקוסמטיקה" },
-  { id: 16, name: "נעורים – רויטל עוז",          cat: "יופי וטיפוח",     tel: "076-816-2799",  hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קוסמטיקה פרא-רפואית ורפואה משלימה" },
-  { id: 17, name: "Beauty Riahm",               cat: "יופי וטיפוח",     tel: "076-860-8732",  hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קוסמטיקה פרא-רפואית לנשים ונערות בלבד" },
-  { id: 18, name: "אורנית – איפור כלות וערב",   cat: "יופי וטיפוח",     tel: "054-5236804",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://instagram.com/oranit.tastas", fb: "", desc: "מאפרת כלות ואירועי ערב" },
-  { id: 19, name: "טלינקה – איפור ושיער כלות",  cat: "יופי וטיפוח",     tel: "050-6525573",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "איפור ועיצוב שיער לכלות ואירועי ערב" },
-  { id: 20, name: "סטיילינג טיפולי – אורית ברגר", cat: "יופי וטיפוח", tel: "054-5953953",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סטיילינג וטיפולי סנדאות" },
+  { id: 7,  name: "נלו דה לאון – מספרת גברים", cat: "יופי וטיפוח",     tel: "053-2838100",   hours: "",               addr: "רימון 11, באר גנים",       site: "", ig: "https://www.instagram.com/barber_nelo", fb: "", desc: "מספרת גברים וילדים" },
+  { id: 8,  name: "גלית עיצוב שיער",            cat: "יופי וטיפוח",     tel: "054-7755845",   hours: "",               addr: "מלכית 70, באר גנים",       site: "", ig: "", fb: "", desc: "מספרה לנשים – עיצוב שיער וצבע" },
+  { id: 9,  name: "חיה – החלקות שיער עד הבית", cat: "יופי וטיפוח",   tel: "052-5253772",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "החלקת שיער מינרלי עד בית הלקוחה" },
+  { id: 10, name: "LIOR HODAYA – עיצוב גבות",  cat: "יופי וטיפוח",    tel: "050-6705122",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "https://wa.me/972506705122", desc: "עיצוב גבות טבעיות, הרמת ריסים, מיקרובליידינג, שעוות גוף" },
+  { id: 11, name: "נטע יצחק – פדיקור ומניקור", cat: "יופי וטיפוח",    tel: "053-5236763",   hours: "",               addr: "גפן 7, באר גנים",          site: "https://cal.mk/f3NfAj", ig: "", fb: "https://www.facebook.com/share/1PZR24QEwT/", desc: "פדיקור רפואי, פדיקור טיפולי, ציפורן חודרנית, לק ג'ל" },
+  { id: 12, name: "נוי אמר – ציפורניים",        cat: "יופי וטיפוח",    tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בניית ציפורניים ולק ג'ל" },
+  { id: 13, name: "ליאת – בניית ציפורניים",     cat: "יופי וטיפוח",    tel: "",              hours: "",               addr: "החריש 15, באר גנים",       site: "", ig: "", fb: "", desc: "בניית ציפורניים ולק ג'ל" },
+  { id: 14, name: "ליטל בן חמו קוסמטיקה",      cat: "יופי וטיפוח",    tel: "",              hours: "",               addr: "אדוה, באר גנים",            site: "", ig: "", fb: "", desc: "קליניקה לטיפולי יופי, אקנה ואנטי-אייג'ינג" },
+  { id: 15, name: "אמילי – טיפולי פנים",        cat: "יופי וטיפוח",    tel: "050-635-5660",  hours: "",               addr: "באר גנים",                  site: "", ig: "Emily_atia", fb: "", desc: "טיפולי פנים וקוסמטיקה" },
+  { id: 16, name: "נעורים – רויטל עוז",         cat: "יופי וטיפוח",    tel: "076-816-2799",  hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קוסמטיקה פרא-רפואית ורפואה משלימה" },
+  { id: 17, name: "Beauty Riahm",               cat: "יופי וטיפוח",    tel: "076-860-8732",  hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קוסמטיקה פרא-רפואית לנשים ונערות בלבד" },
+  { id: 18, name: "אורנית – איפור כלות וערב",   cat: "יופי וטיפוח",    tel: "054-5236804",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://instagram.com/oranit.tastas", fb: "", desc: "מאפרת כלות ואירועי ערב" },
+  { id: 19, name: "טלינקה – איפור ושיער כלות",  cat: "יופי וטיפוח",    tel: "050-6525573",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "איפור ועיצוב שיער לכלות ואירועי ערב" },
+  { id: 20, name: "סטיילינג טיפולי – אורית ברגר", cat: "יופי וטיפוח", tel: "054-5953953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "סטיילינג וטיפולי סנדאות" },
   { id: 73, name: "Rotem Tsaidi - Beauty clinic", cat: "יופי וטיפוח", tel: "054-236-9892", hours: "א׳–ו׳ בתיאום מראש | שבת סגור", addr: "רותם המדבר 11, באר גנים", site: "", ig: "https://www.instagram.com/rotem_beauty_clinic?igsh=aDFleTNycW1vc29u", fb: "", desc: "החלקות שיער אורגניות | עיצוב ושיקום גבות טבעיות | הרמת גבות" },
-  { id: 21, name: "פרחי אושר",                  cat: "קניות ושירותים", tel: "054-6671953",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חנות פרחים – זרים, עיצובים ומתנות" },
+  { id: 21, name: "פרחי אושר",                  cat: "קניות ושירותים", tel: "054-6671953",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חנות פרחים – זרים, עיצובים ומתנות" },
 
   // ═══ בריאות ורפואה ═══
   { id: 22, name: "ד\"ר ריי ביטון",              cat: "בריאות ורפואה",  tel: "058-789-6543",  hours: "פתוח 24 שעות (מומלץ לתאם מראש)", addr: "רימון 34, באר גנים", site: "", ig: "", fb: "", desc: "מרפאה / קליניקה – רפואה כללית" },
-  { id: 23, name: "מיכל מרים – איזון גוף ונפש", cat: "בריאות ורפואה",  tel: "054-2191590",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/michaldamri/", fb: "", desc: "מסאז', עיסוי, רפלקסולוגיה וטיפול במגע" },
-  { id: 24, name: "הודיה ז'ורנו – ריפוי בעיסוק", cat: "בריאות ורפואה", tel: "052-3377110",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
-  { id: 25, name: "אלי דוקרביץ' – פיזיותרפיה",  cat: "בריאות ורפואה",  tel: "054-5545675",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "פיזיותרפיה" },
+  { id: 23, name: "מיכל מרים – איזון גוף ונפש", cat: "בריאות ורפואה",  tel: "054-2191590",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/michaldamri/", fb: "", desc: "מסאז', עיסוי, רפלקסולוגיה וטיפול במגע" },
+  { id: 24, name: "הודיה ז'ורנו – ריפוי בעיסוק", cat: "בריאות ורפואה", tel: "052-3377110",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
+  { id: 25, name: "אלי דוקרביץ' – פיזיותרפיה",  cat: "בריאות ורפואה",  tel: "054-5545675",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "פיזיותרפיה" },
   { id: 26, name: "עידית טיפולים הוליסטיים – ד\"ר דוד עמיחי", cat: "בריאות ורפואה", tel: "053-7668959", hours: "", addr: "נוף ים 46, באר גנים", site: "", ig: "", fb: "", desc: "יוגה, התעמלות מתקנת, טיפולי מגע ורפואה משלימה" },
-  { id: 27, name: "fitK – מתן פלודה",              cat: "בריאות ורפואה",  tel: "054-5519008",   hours: "",                addr: "באר גנים",                  site: "https://landing.fitk.co.il/review_feliz/?pid=485209", ig: "", fb: "", desc: "ליווי בריאות וכושר" },
+  { id: 27, name: "fitK – מתן פלודה",             cat: "בריאות ורפואה",  tel: "054-5519008",   hours: "",               addr: "באר גנים",                  site: "https://landing.fitk.co.il/review_feliz/?pid=485209", ig: "", fb: "", desc: "ליווי בריאות וכושר" },
   { id: 28, name: "סטודיו ME – סטודיו לבריאות ויופי", cat: "בריאות ורפואה", tel: "055-9893297", hours: "", addr: "מלכית 46, באר גנים", site: "", ig: "https://www.instagram.com/p/DA23tNfKy6F/?igsh=dDZvcnJseHR4aXF0", fb: "https://www.facebook.com/share/p/VL8xjWkavDRTE79Q/", tiktok: "https://www.tiktok.com/@me.meital?_r=1&_t=ZS-93VHxSiCSMZ", desc: "פילאטיס מכשירים | ליווי לתזונה בריאה | כושר | קוסמטיקה קוריאנית | קינוחים עם ערכים" },
-  { id: 29, name: "איטח דבורה – פסיכותרפיסטית", cat: "בריאות ורפואה",  tel: "054-4544009",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "מטפלת פרטנית, זוגית ומשפחתית" },
-  { id: 30, name: "יוני יושע – פסיכותרפיה לילדים", cat: "בריאות ורפואה", tel: "052-3838436", hours: "",                addr: "מלכית 17, באר גנים",       site: "", ig: "", fb: "", desc: "טיפול רגשי וסדנאות לילדים" },
-  { id: 31, name: "סאלי יהבי איתן – טיפול משפחתי", cat: "בריאות ורפואה", tel: "",             hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "טיפול משפחתי וזוגי" },
-  { id: 32, name: "אלונה בורלא – יועצת הנקה IBCLC", cat: "בריאות ורפואה", tel: "050-3010497", hours: "",               addr: "באר גנים",                  site: "http://www.imanika.co.il", ig: "", fb: "", desc: "ייעוץ הנקה מוסמך IBCLC" },
-  { id: 33, name: "עדן מויאל – מרפאה בעיסוק",    cat: "בריאות ורפואה",  tel: "",              hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
+  { id: 29, name: "איטח דבורה – פסיכותרפיסטית", cat: "בריאות ורפואה",  tel: "054-4544009",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "מטפלת פרטנית, זוגית ומשפחתית" },
+  { id: 30, name: "יוני יושע – פסיכותרפיה לילדים", cat: "בריאות ורפואה", tel: "052-3838436", hours: "",               addr: "מלכית 17, באר גנים",       site: "", ig: "", fb: "", desc: "טיפול רגשי וסדנאות לילדים" },
+  { id: 31, name: "סאלי יהבי איתן – טיפול משפחתי", cat: "בריאות ורפואה", tel: "",            hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "טיפול משפחתי וזוגי" },
+  { id: 32, name: "אלונה בורלא – יועצת הנקה IBCLC", cat: "בריאות ורפואה", tel: "050-3010497", hours: "",              addr: "באר גנים",                  site: "http://www.imanika.co.il", ig: "", fb: "", desc: "ייעוץ הנקה מוסמך IBCLC" },
+  { id: 33, name: "עדן מויאל – מרפאה בעיסוק",    cat: "בריאות ורפואה",  tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ריפוי בעיסוק" },
   { id: 75, name: "אביב רפאלי נחמני – מטפל בחרדות ובטראומה", cat: "בריאות ורפואה", tel: "053-420-5110", hours: "", addr: "רימון 27, באר גנים", site: "https://rafaelnlp.com", ig: "https://www.instagram.com/avivnahmani?igsh=ajFoYXdueXV5aTln", fb: "", tiktok: "https://www.tiktok.com/@avivrefaelinahmani?_r=1&_t=ZS-94uNNR0hTPA", desc: "מטפל בחרדות ובטראומה" },
 
   // ═══ כושר ופנאי ═══
   { id: 34, name: "סטודיו שלו יפרח – כושר ופילאטיס", cat: "כושר ופנאי", tel: "050-444-2871", hours: "א׳–ה׳ 06:00–21:00 | שישי 08:00–13:00 | שבת סגור", addr: "דרך הים 21, באר גנים", site: "", ig: "", fb: "", desc: "מגוון אימונים, שיעורי סטודיו ופילאטיס" },
-  { id: 35, name: "סיס פילאטיס – Lee Pilates",    cat: "כושר ופנאי",    tel: "",              hours: "",                addr: "אדווה 43, באר גנים",       site: "", ig: "", fb: "", desc: "סטודיו לפילאטיס מכשירים – אימונים אישיים וזוגיים" },
-  { id: 36, name: "מועדון הטניס ״עולם הטניס״",    cat: "כושר ופנאי",    tel: "058-5826577",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/tennisworld_il", fb: "", desc: "אימוני טניס לילדים, נוער ובוגרים – מיכה גולנדר" },
-  { id: 37, name: "\"איזהו גיבור\" – אמנויות לחימה", cat: "כושר ופנאי", tel: "",              hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קראטה, קרב מגע והגנה עצמית לכל הגילאים" },
-  { id: 38, name: "זהבה בוהדנה – אימון לחיים",    cat: "כושר ופנאי",    tel: "",              hours: "",                addr: "חבצלת החוף 6, באר גנים",   site: "", ig: "", fb: "", desc: "קואצ'ינג, הכוונה ואימון משפחתי" },
+  { id: 35, name: "סיס פילאטיס – Lee Pilates",    cat: "כושר ופנאי",    tel: "",              hours: "",               addr: "אדווה 43, באר גנים",       site: "", ig: "", fb: "", desc: "סטודיו לפילאטיס מכשירים – אימונים אישיים וזוגיים" },
+  { id: 36, name: "מועדון הטניס ״עולם הטניס״",    cat: "כושר ופנאי",    tel: "058-5826577",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/tennisworld_il", fb: "", desc: "אימוני טניס לילדים, נוער ובוגרים – מיכה גולנדר" },
+  { id: 37, name: "\"איזהו גיבור\" – אמנויות לחימה", cat: "כושר ופנאי", tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "קראטה, קרב מגע והגנה עצמית לכל הגילאים" },
+  { id: 38, name: "זהבה בוהדנה – אימון לחיים",    cat: "כושר ופנאי",    tel: "",              hours: "",               addr: "חבצלת החוף 6, באר גנים",   site: "", ig: "", fb: "", desc: "קואצ'ינג, הכוונה ואימון משפחתי" },
 
   // ═══ בניה ותחזוקה ═══
-  { id: 39, name: "אלומיניום אבירם",              cat: "בניה ותחזוקה",   tel: "054-7600172",   hours: "",                addr: "אפיקי מים, באר גנים",      site: "", ig: "", fb: "https://www.facebook.com/share/1AtLyW6pM3/", desc: "עבודות אלומיניום וזכוכית – תריסים, רשתות, חלונות, מקלחונים" },
-  { id: 40, name: "איליה הנדסה וייעוץ חשמל",      cat: "בניה ותחזוקה",   tel: "054-6543409",   hours: "",                addr: "באר גנים",                  site: "https://handasat-hashmal.com", ig: "", fb: "", desc: "תכנון וביצוע פרויקטים חשמל" },
-  { id: 41, name: "דרור תנעמי – חשמל ומיזוג",     cat: "בניה ותחזוקה",   tel: "050-5502598",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "התקנות ותיקונים חשמל ומיזוג" },
-  { id: 42, name: "שירה AIR – מזגנים",             cat: "בניה ותחזוקה",   tel: "050-4925595",   hours: "",                addr: "באר גנים",                  site: "http://shirair.co.il", ig: "", fb: "", desc: "התקנה, מכירה ותיקון מזגנים" },
-  { id: 43, name: "ע.י אחזקות – אינסטלציה",        cat: "בניה ותחזוקה",   tel: "054-5865701",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "עבודות אינסטלציה" },
-  { id: 44, name: "יגל חשמל ותקשורת",              cat: "בניה ותחזוקה",   tel: "050-2731140",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חשמל ותקשורת – יוסי" },
-  { id: 45, name: "ליאור פלוס – תחזוקה כללית",     cat: "בניה ותחזוקה",   tel: "050-6971216",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "תחזוקה, שיפוץ, מיזוג, מצלמות, חשמל – הנדימן" },
-  { id: 46, name: "דקופייטינג – שיפוץ וצבע",       cat: "בניה ותחזוקה",   tel: "053-5001571",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "עבודות שיפוץ וצבע – מוטי בנטולילה" },
-  { id: 47, name: "מונטיפיור – אחזקת מבנים",      cat: "בניה ותחזוקה",   tel: "054-7775752",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "אחזקת מבנים – מוטי אביטבול" },
-  { id: 48, name: "עומרי שטרית – הנדסת קרקע",      cat: "בניה ותחזוקה",   tel: "054-7780576",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הנדסת קרקע ובניין" },
-  { id: 49, name: "גן הורד – גינון",                cat: "בניה ותחזוקה",   tel: "051-5474438",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שירותי גינון – דורון" },
-  { id: 50, name: "בן שמעוני – ניקוי פנלים סולריים", cat: "בניה ותחזוקה", tel: "050-478-2884", hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ניקוי לוחות סולאריים" },
-  { id: 51, name: "נעמה הדר כהן – עיצוב פנים",     cat: "בניה ותחזוקה",   tel: "054-5236505",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/m_n_interiordesign/", fb: "", desc: "עיצוב פנים לבית" },
+  { id: 39, name: "אלומיניום אבירם",              cat: "בניה ותחזוקה",   tel: "054-7600172",   hours: "",               addr: "אפיקי מים, באר גנים",      site: "", ig: "", fb: "https://www.facebook.com/share/1AtLyW6pM3/", desc: "עבודות אלומיניום וזכוכית – תריסים, רשתות, חלונות, מקלחונים" },
+  { id: 40, name: "איליה הנדסה וייעוץ חשמל",      cat: "בניה ותחזוקה",   tel: "054-6543409",   hours: "",               addr: "באר גנים",                  site: "https://handasat-hashmal.com", ig: "", fb: "", desc: "תכנון וביצוע פרויקטים חשמל" },
+  { id: 41, name: "דרור תנעמי – חשמל ומיזוג",     cat: "בניה ותחזוקה",   tel: "050-5502598",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "התקנות ותיקונים חשמל ומיזוג" },
+  { id: 42, name: "שירה AIR – מזגנים",            cat: "בניה ותחזוקה",   tel: "050-4925595",   hours: "",               addr: "באר גנים",                  site: "http://shirair.co.il", ig: "", fb: "", desc: "התקנה, מכירה ותיקון מזגנים" },
+  { id: 43, name: "ע.י אחזקות – אינסטלציה",       cat: "בניה ותחזוקה",   tel: "054-5865701",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "עבודות אינסטלציה" },
+  { id: 44, name: "יגל חשמל ותקשורת",             cat: "בניה ותחזוקה",   tel: "050-2731140",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "חשמל ותקשורת – יוסי" },
+  { id: 45, name: "ליאור פלוס – תחזוקה כללית",    cat: "בניה ותחזוקה",   tel: "050-6971216",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "תחזוקה, שיפוץ, מיזוג, מצלמות, חשמל – הנדימן" },
+  { id: 46, name: "דקופייטינג – שיפוץ וצבע",      cat: "בניה ותחזוקה",   tel: "053-5001571",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "עבודות שיפוץ וצבע – מוטי בנטולילה" },
+  { id: 47, name: "מונטיפיור – אחזקת מבנים",      cat: "בניה ותחזוקה",   tel: "054-7775752",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "אחזקת מבנים – מוטי אביטבול" },
+  { id: 48, name: "עומרי שטרית – הנדסת קרקע",     cat: "בניה ותחזוקה",   tel: "054-7780576",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הנדסת קרקע ובניין" },
+  { id: 49, name: "גן הורד – גינון",               cat: "בניה ותחזוקה",   tel: "051-5474438",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שירותי גינון – דורון" },
+  { id: 50, name: "בן שמעוני – ניקוי פנלים סולריים", cat: "בניה ותחזוקה", tel: "050-478-2884", hours: "",              addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ניקוי לוחות סולאריים" },
+  { id: 51, name: "נעמה הדר כהן – עיצוב פנים",    cat: "בניה ותחזוקה",   tel: "054-5236505",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/m_n_interiordesign/", fb: "", desc: "עיצוב פנים לבית" },
 
   // ═══ מקצועות חופשיים ═══
-  { id: 52, name: "עדי תנעמי – עו\"ד ומגשרת",     cat: "מקצועות חופשיים", tel: "054-2131926",   hours: "",                addr: "באר גנים",                  site: "https://get-marketing.co.il/adi-tanami", ig: "", fb: "", desc: "דיני משפחה, מקרקעין, מעמד אישי, צוואות, גישור וייפוי כוח" },
-  { id: 53, name: "עו\"ד אביתר בן נעים",           cat: "מקצועות חופשיים", tel: "050-6920926",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ליטיגציה וחדלות פירעון" },
-  { id: 54, name: "נסים מרדכי – שמאות מקרקעין",   cat: "מקצועות חופשיים", tel: "054-5236488",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שמאי מקרקעין" },
-  { id: 55, name: "מור בטיחות",                   cat: "מקצועות חופשיים", tel: "054-7775612",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הדרכות בטיחות – עזרא" },
+  { id: 52, name: "עדי תנעמי – עו\"ד ומגשרת",    cat: "מקצועות חופשיים", tel: "054-2131926",   hours: "",               addr: "באר גנים",                  site: "https://get-marketing.co.il/adi-tanami", ig: "", fb: "", desc: "דיני משפחה, מקרקעין, מעמד אישי, צוואות, גישור וייפוי כוח" },
+  { id: 53, name: "עו\"ד אביתר בן נעים",          cat: "מקצועות חופשיים", tel: "050-6920926",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "ליטיגציה וחדלות פירעון" },
+  { id: 54, name: "נסים מרדכי – שמאות מקרקעין",  cat: "מקצועות חופשיים", tel: "054-5236488",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שמאי מקרקעין" },
+  { id: 55, name: "מור בטיחות",                  cat: "מקצועות חופשיים", tel: "054-7775612",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הדרכות בטיחות – עזרא" },
 
   // ═══ אירועים וצילום ═══
-  { id: 56, name: "מעין תשובה – סטודיו לצילום",   cat: "אירועים וצילום",  tel: "050-3311841",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/maayan.tshuva.photographer", fb: "", desc: "צלמת משפחות, בוק מצווה, גיל שנה, חאלקה, תדמית" },
-  { id: 57, name: "הפקות יגל&שהם",                 cat: "אירועים וצילום",  tel: "052-4225365",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/yagel.photographer", fb: "", desc: "צילומי סטילס, מגנטים, אינסטבלוקים לאירועים + מכירת אינסטבלוקים לפי מחירון" },
-  { id: 58, name: "שלום תשובה הפקות",              cat: "אירועים וצילום",  tel: "052-4449898",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הגברה, תאורה ואולפן הקלטות" },
-  { id: 59, name: "מתנפחים ונהנים",               cat: "אירועים וצילום",  tel: "054-5236505",   hours: "",                addr: "באר גנים",                  site: "https://afriatmichi.github.io/Cohen/", ig: "", fb: "", desc: "השכרת מתנפחים ומכונות מזון לאירועים" },
-  { id: 60, name: "מור עושה דרמה",                 cat: "אירועים וצילום",  tel: "054-6867726",   hours: "",                addr: "באר גנים",                  site: "https://moryefet.mozello.co.il/", ig: "", fb: "", desc: "תיאטרון, סדנאות, כתיבה ובימוי – מור יפת" },
+  { id: 56, name: "מעין תשובה – סטודיו לצילום",  cat: "אירועים וצילום",  tel: "050-3311841",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/maayan.tshuva.photographer", fb: "", desc: "צלמת משפחות, בוק מצווה, גיל שנה, חאלקה, תדמית" },
+  { id: 57, name: "הפקות יגל&שהם",                cat: "אירועים וצילום",  tel: "052-4225365",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/yagel.photographer", fb: "", desc: "צילומי סטילס, מגנטים, אינסטבלוקים לאירועים + מכירת אינסטבלוקים לפי מחירון" },
+  { id: 58, name: "שלום תשובה הפקות",             cat: "אירועים וצילום",  tel: "052-4449898",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "הגברה, תאורה ואולפן הקלטות" },
+  { id: 59, name: "מתנפחים ונהנים",              cat: "אירועים וצילום",  tel: "054-5236505",   hours: "",               addr: "באר גנים",                  site: "https://afriatmichi.github.io/Cohen/", ig: "", fb: "", desc: "השכרת מתנפחים ומכונות מזון לאירועים" },
+  { id: 60, name: "מור עושה דרמה",                cat: "אירועים וצילום",  tel: "054-6867726",   hours: "",               addr: "באר גנים",                  site: "https://moryefet.mozello.co.il/", ig: "", fb: "", desc: "תיאטרון, סדנאות, כתיבה ובימוי – מור יפת" },
 
   // ═══ חינוך ═══
-  { id: 61, name: "ברוריה נעמי – אנגלית",          cat: "חינוך",            tel: "052-8709406",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שיעורים פרטיים באנגלית לכל הגילאים" },
-  { id: 62, name: "סניף בני עקיבא",                 cat: "חינוך",            tel: "",              hours: "",                addr: "רימון 34, באר גנים",       site: "", ig: "", fb: "", desc: "תנועת נוער – פעילות שוטפת לכל הגילאים" },
-  { id: 63, name: "בי\"ס באר גנים – דרך הצלילים", cat: "חינוך",            tel: "",              hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בית ספר יסודי ביישוב" },
-  { id: 74, name: "תימור נחמני – ללמוד אנגלית בכיף", cat: "חינוך",         tel: "053-420-5110",  hours: "",                addr: "רימון 27, באר גנים",       site: "", ig: "", fb: "", desc: "מורה לאנגלית לכל הגילאים - מהקניית שפה ועד הגשה לבגרות." },
+  { id: 61, name: "ברוריה נעמי – אנגלית",         cat: "חינוך",            tel: "052-8709406",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שיעורים פרטיים באנגלית לכל הגילאים" },
+  { id: 62, name: "סניף בני עקיבא",               cat: "חינוך",            tel: "",              hours: "",               addr: "רימון 34, באר גנים",       site: "", ig: "", fb: "", desc: "תנועת נוער – פעילות שוטפת לכל הגילאים" },
+  { id: 63, name: "בי\"ס באר גנים – דרך הצלילים", cat: "חינוך",           tel: "",              hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "בית ספר יסודי ביישוב" },
+  { id: 74, name: "תימור נחמני – ללמוד אנגלית בכיף", cat: "חינוך",        tel: "053-420-5110",  hours: "",               addr: "רימון 27, באר גנים",       site: "", ig: "", fb: "", desc: "מורה לאנגלית לכל הגילאים - מהקניית שפה ועד הגשה לבגרות." },
 
   // ═══ טכנולוגיה ועסקים ═══
-  { id: 64, name: "ביננו – Bnano מחשבים",         cat: "טכנולוגיה ועסקים", tel: "058-625-0506",  hours: "א׳–ה׳ 09:00–17:00 | שישי ושבת סגור", addr: "בשביל התקווה, באר גנים", site: "http://www.bnano.co.il/", ig: "", fb: "", desc: "תיקון ומכירת מחשבים, סלולר, אלקטרוניקה – משלוח לכל הארץ" },
-  { id: 65, name: "kprint – קייפרינט",             cat: "טכנולוגיה ועסקים", tel: "054-4946300",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "https://www.facebook.com/share/1BPPWfdWLw/", desc: "הדפסה, מיתוג ומתנות על מוצרים – דביר מעוז" },
-  { id: 66, name: "3DT – הדפסה בתלת מימד",       cat: "טכנולוגיה ועסקים", tel: "054-5684370",   hours: "",                addr: "באר גנים",                  site: "https://3DT.pro", ig: "lid_or_design", fb: "", desc: "הנדסה, עיצוב מוצר, הדפסה בתלת מימד ומוצרי הום דקור – דביר" },
+  { id: 64, name: "ביננו – Bnano מחשבים",        cat: "טכנולוגיה ועסקים", tel: "058-625-0506",  hours: "א׳–ה׳ 09:00–17:00 | שישי ושבת סגור", addr: "בשביל התקווה, באר גנים", site: "http://www.bnano.co.il/", ig: "", fb: "", desc: "תיקון ומכירת מחשבים, סלולר, אלקטרוניקה – משלוח לכל הארץ" },
+  { id: 65, name: "kprint – קייפרינט",            cat: "טכנולוגיה ועסקים", tel: "054-4946300",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "https://www.facebook.com/share/1BPPWfdWLw/", desc: "הדפסה, מיתוג ומתנות על מוצרים – דביר מעוז" },
+  { id: 66, name: "3DT – הדפסה בתלת מימד",      cat: "טכנולוגיה ועסקים", tel: "054-5684370",   hours: "",               addr: "באר גנים",                  site: "https://3DT.pro", ig: "lid_or_design", fb: "", desc: "הנדסה, עיצוב מוצר, הדפסה בתלת מימד ומוצרי הום דקור – דביר" },
 
   // ═══ קניות ושירותים ═══
-  { id: 68, name: "אילניטוס – סוכנות נסיעות",    cat: "קניות ושירותים",  tel: "054-3532637",   hours: "",                addr: "באר גנים",                  site: "https://did.li/elanitus", ig: "", fb: "", desc: "חופשות ונופש בארץ ובעולם – אילנית בוקרה" },
-  { id: 69, name: "מתן שפע רכב ואנרגיה",           cat: "קניות ושירותים",  tel: "050-4708069",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: " שרותי רכב קניה ומכירה ומימון + מכירת רכב תפעולי חדש" },
-  { id: 70, name: "אודיס פלייס – חיות מחמד",      cat: "קניות ושירותים",  tel: "054-3133996",   hours: "",                addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/udis_place", fb: "", desc: "מזון וציוד לכלבים, חתולים וכל בעלי החיים" },
-  { id: 71, name: "סטלינקה בוטיק בגדים", cat: "קניות ושירותים", tel: "050-6525573", hours: "", addr: "באר גנים", site: "https://talinka.shop/collections/new-in", ig: "", fb: "", desc: " בוטיק בגדים יבוא מכל מיני מעצבים בעולם" },
-  { id: 72, name: "נסים מרדכי – שמאות",           cat: "קניות ושירותים",  tel: "054-5236488",   hours: "",                addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שמאי מקרקעין" },
+  { id: 68, name: "אילניטוס – סוכנות נסיעות",    cat: "קניות ושירותים",  tel: "054-3532637",   hours: "",               addr: "באר גנים",                  site: "https://did.li/elanitus", ig: "", fb: "", desc: "חופשות ונופש בארץ ובעולם – אילנית בוקרה" },
+  { id: 69, name: "מתן שפע רכב ואנרגיה",          cat: "קניות ושירותים",  tel: "050-4708069",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: " שרותי רכב קניה ומכירה ומימון + מכירת רכב תפעולי חדש" },
+  { id: 70, name: "אודיס פלייס – חיות מחמד",     cat: "קניות ושירותים",  tel: "054-3133996",   hours: "",               addr: "באר גנים",                  site: "", ig: "https://www.instagram.com/udis_place", fb: "", desc: "מזון וציוד לכלבים, חתולים וכל בעלי החיים" },
+  { id: 71, name: "סטלינקה בוטיק בגדים",          cat: "קניות ושירותים",  tel: "050-6525573",   hours: "",               addr: "באר גנים",                  site: "https://talinka.shop/collections/new-in", ig: "", fb: "", desc: " בוטיק בגדים יבוא מכל מיני מעצבים בעולם" },
+  { id: 72, name: "נסים מרדכי – שמאות",          cat: "קניות ושירותים",  tel: "054-5236488",   hours: "",               addr: "באר גנים",                  site: "", ig: "", fb: "", desc: "שמאי מקרקעין" },
 ];
 
 function getOpenStatus(h) {
@@ -201,19 +204,19 @@ function Card({ biz, idx, expanded, onToggle, mounted }) {
   );
 }
 
-export default function App() {
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. קומפוננטת העסקים - BusinessesView (הקוד שלך בדיוק, רק במעטפת)
+// ─────────────────────────────────────────────────────────────────────────────
+function BusinessesView({ onBack }) {
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("הכל");
   const [expandedId, setExpandedId] = useState(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { 
-    setTimeout(() => setMounted(true), 60); 
-  }, []);
+  useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
 
-  // לוגיקת החיפוש המטושטש (Fuzzy Search) משולבת עם הסינון
   const filtered = useMemo(() => {
-    // 1. קודם כל מסננים את העסקים לפי קטגוריה או סטטוס פתוח
     let baseList = BUSINESSES;
     if (activeCat === "פתוח עכשיו") {
       baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
@@ -221,18 +224,15 @@ export default function App() {
       baseList = baseList.filter(b => b.cat === activeCat);
     }
 
-    // 2. אם אין טקסט בחיפוש, מחזירים את הרשימה הבסיסית
     const q = search.trim();
     if (!q) return baseList;
 
-    // 3. הגדרות החיפוש המטושטש
     const fuse = new Fuse(baseList, {
-      keys: ["name", "desc", "addr", "cat"], // שדות לחיפוש
-      threshold: 0.4, // רמת "סלחנות": 0 = מדויק, 1 = הכל מתאים. 0.4 זה האיזון המומלץ.
-      distance: 100,  // כמה רחוקה יכולה להיות טעות ההקלדה
+      keys: ["name", "desc", "addr", "cat"],
+      threshold: 0.4,
+      distance: 100,
     });
 
-    // 4. מבצעים את החיפוש ומחלצים את האובייקטים המקוריים
     return fuse.search(q).map(result => result.item);
   }, [search, activeCat]);
 
@@ -246,36 +246,12 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f7f3ed", color: "#1e140a" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0}
-        .si{width:100%;padding:13px 18px 13px 46px;border:2px solid #e8d5b7;border-radius:50px;font-size:16px;font-family:'Heebo',sans-serif;background:#fff;outline:none;transition:all .25s;color:#1e140a;direction:rtl}
-        .si:focus{border-color:#c4651a;box-shadow:0 0 0 3px rgba(196,101,26,.13)}
-        .si::placeholder{color:#b09070}
-        .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #e8d5b7;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#7a5c3a;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
-        .cc:hover{border-color:#c4651a;color:#c4651a}
-        .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
-        .cc.open-now { border-color: #16a34a; color: #16a34a; }
-        .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
-        .card{background:#fff;border-radius:18px;padding:18px;border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden}
-        .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
-        .ab{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
-        .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
-        .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
-        .ab.o{background:#fff;border:2px solid #e8d5b7;color:#555}
-        .ab.o:hover{border-color:#c4651a;background:#fff9f4}
-        .dr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:1px solid #f5ede0;font-size:13px}
-        .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
-        .fa.vis{opacity:1;transform:translateY(0)}
-        @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-        .ex{animation:fu .22s ease}
-        .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
-        .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
-        @media(max-width:600px){.grid{grid-template-columns:1fr!important}}
-        ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
-      `}</style>
+      {/* כפתור חזור חדש */}
+      <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
+        ➔ חזור למסך הראשי
+      </button>
 
-      <header style={{ background: "linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)", padding: "32px 20px 42px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <header style={{ background: "linear-gradient(135deg,#1a0d04 0%,#3a2008 55%,#573015 100%)", padding: "42px 20px 42px", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 15% 60%,rgba(196,101,26,.22) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(232,162,78,.13) 0%,transparent 50%)" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ fontSize: 38, marginBottom: 7 }}>🌿</div>
@@ -320,11 +296,163 @@ export default function App() {
           <a href="https://wa.me/9720559139013?text=שלום, אשמח לעדכן פרטים של עסק באתר באר גנים" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלח הודעה</a>
         </div>
         <div style={{ marginTop: 14, fontSize: 11, color: "#aaa", maxWidth: 480, margin: "14px auto 0", lineHeight: 1.6, padding: "10px 14px", background: "#f5ede0", borderRadius: 10 }}>
-          הממידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
+          המידע באתר נאסף ממקורות גלויים ומוצג כשירות לציבור.
         </div>
       </footer>
-
       <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
     </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. מסך השוק - MarketView (שלב א: רק עיצוב בלי מסד נתונים עדיין)
+// ─────────────────────────────────────────────────────────────────────────────
+function MarketView({ onBack }) {
+  const [showForm, setShowForm] = useState(false);
+
+  // מודעות דמה (Fake Data) רק כדי לראות איך זה ייראה
+  const dummyAds = [
+    { id: 1, title: "אופני הרים לגבר מצב חדש", price: "450", tel: "050-1234567", date: "היום" },
+    { id: 2, title: "ספרי לימוד לכיתה י' במצב מעולה", price: "100", tel: "054-9876543", date: "אתמול" },
+    { id: 3, title: "שולחן סלון מעץ אלון", price: "250", tel: "052-1112233", date: "לפני יומיים" },
+  ];
+
+  return (
+    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a" }}>
+      <button onClick={onBack} style={{ position: "absolute", top: 15, right: 15, zIndex: 1000, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "8px 15px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(5px)" }}>
+        ➔ חזור למסך הראשי
+      </button>
+
+      <header style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)", padding: "42px 20px 30px", textAlign: "center" }}>
+        <div style={{ fontSize: 38, marginBottom: 7 }}>🛒</div>
+        <h1 style={{ fontSize: "clamp(28px,8vw,50px)", fontWeight: 900, color: "#f8fafc", letterSpacing: "-1px" }}>שוק באר גנים</h1>
+        <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>קונים ומוכרים בתוך היישוב</p>
+      </header>
+
+      <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
+        <button 
+          onClick={() => setShowForm(true)} 
+          style={{ width: "100%", padding: "15px", marginBottom: "20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
+        >
+          + פרסם מודעה חדשה (בקרוב)
+        </button>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+          {dummyAds.map(ad => (
+            <div key={ad.id} style={{ background: "#fff", padding: "15px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "bold" }}>{ad.title}</h3>
+                <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>₪{ad.price}</span>
+              </div>
+              <p style={{ color: "#64748b", fontSize: "12px", marginTop: "10px" }}>פורסם: {ad.date}</p>
+              <div style={{ marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "12px" }}>
+                <a href={`https://wa.me/972${ad.tel.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#25d366", color: "#fff", padding: "8px 16px", borderRadius: "20px", textDecoration: "none", fontSize: "13px", fontWeight: "bold" }}>
+                  💬 שלח הודעה למוכר
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* פופ-אפ להוספת מודעה (רק עיצוב בינתיים) */}
+      {showForm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
+          <div style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "90%", maxWidth: "400px" }}>
+            <h2 style={{ marginBottom: "20px", textAlign: "center" }}>פרסום מודעה חדשה</h2>
+            <p style={{ color: "#64748b", fontSize: "14px", textAlign: "center", marginBottom: "20px" }}>* מודול שמירת הנתונים יתווסף בשלב הבא *</p>
+            <input placeholder="מה תרצה למכור?" style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} />
+            <input placeholder="מחיר (בשקלים)" type="number" style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", marginBottom: "12px", fontFamily: "Heebo" }} />
+            <button onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "#cbd5e1", color: "#0f172a", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>סגור בינתיים</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. מסך הבית - HomeView (כניסה לאפליקציה)
+// ─────────────────────────────────────────────────────────────────────────────
+function HomeView({ onNavigate }) {
+  return (
+    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "linear-gradient(135deg, #fdfbf7 0%, #f4eee3 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <style>{`
+        .home-btn {
+          width: 100%;
+          max-width: 320px;
+          padding: 24px;
+          border-radius: 20px;
+          border: none;
+          cursor: pointer;
+          font-family: 'Heebo', sans-serif;
+          transition: transform 0.2s, box-shadow 0.2s;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        .home-btn:hover {
+          transform: translateY(-5px);
+        }
+        .btn-biz {
+          background: linear-gradient(135deg, #1a0d04 0%, #573015 100%);
+          color: #f5e6cc;
+          box-shadow: 0 10px 25px rgba(87, 48, 21, 0.2);
+        }
+        .btn-market {
+          background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+          color: #f8fafc;
+          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+        }
+      `}</style>
+
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <div style={{ fontSize: "60px", marginBottom: "10px" }}>🏡</div>
+        <h1 style={{ fontSize: "36px", fontWeight: "900", color: "#1e140a" }}>הפורטל של באר גנים</h1>
+        <p style={{ fontSize: "16px", color: "#6b5030", marginTop: "5px" }}>לאן תרצה להיכנס?</p>
+      </div>
+
+      <button className="home-btn btn-biz" onClick={() => onNavigate("businesses")}>
+        <span style={{ fontSize: "40px" }}>🌿</span>
+        <span style={{ fontSize: "22px", fontWeight: "800" }}>עסקים בבאר גנים</span>
+        <span style={{ fontSize: "14px", color: "#c4a97d" }}>{BUSINESSES.length} עסקים מקומיים</span>
+      </button>
+
+      <button className="home-btn btn-market" onClick={() => onNavigate("market")}>
+        <span style={{ fontSize: "40px" }}>🛒</span>
+        <span style={{ fontSize: "22px", fontWeight: "800" }}>שוק באר גנים</span>
+        <span style={{ fontSize: "14px", color: "#94a3b8" }}>יד שניה, דרושים ומכירות</span>
+      </button>
+
+      <p style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a" }}>פותח ע"י יונתן יוסף</p>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. ניתוב ראשי - App Component
+// ─────────────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [currentView, setCurrentView] = useState("home"); // "home" | "businesses" | "market"
+
+  return (
+    <>
+      {/* סגנונות גלובליים משותפים */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      `}</style>
+
+      {currentView === "home" && <HomeView onNavigate={setCurrentView} />}
+      {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} />}
+      {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} />}
+    </>
   );
 }
