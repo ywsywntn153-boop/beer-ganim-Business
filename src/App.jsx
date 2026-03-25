@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
+import ReactGA from "react-ga4"; // הוספנו את האנליטיקס
 
 // --- החיבור שלך לפיירבייס ---
 const firebaseConfig = {
@@ -16,6 +17,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// אתחול האנליטיקס עם המזהה שלך
+ReactGA.initialize("G-88P0P0JPWQ");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. הגדרות וקטגוריות
@@ -63,8 +66,14 @@ function OpenBadge({ hours }) {
 
 function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
+  
+  // פונקציה לשליחת נתוני לחיצה לאנליטיקס
+  const track = (actionName) => {
+    ReactGA.event({ category: "Business", action: actionName, label: biz.name });
+  };
+
   return (
-    <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${Math.min(idx * 35, 500)}ms`, borderTop: `3px solid ${cs.color}` }} onClick={onToggle}>
+    <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${Math.min(idx * 35, 500)}ms`, borderTop: `3px solid ${cs.color}` }} onClick={() => { onToggle(); if (!expanded) track("Expand Card"); }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: cs.bg, color: cs.color, padding: "2px 6px", borderRadius: 20, fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
@@ -81,7 +90,7 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
       
       <div className="dr" style={{ borderTop: "1px solid #f0e8d8", paddingTop: 8, paddingBottom: 0 }}>
         <span style={{ fontSize: 13, flexShrink: 0 }}>📞</span>
-        {biz.tel ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 13 }}>{biz.tel}</a> : <span style={{ color: "#b09070", fontSize: 12, fontStyle: "italic" }}>פרטים בפנים</span>}
+        {biz.tel ? <a href={`tel:${biz.tel}`} onClick={e => { e.stopPropagation(); track("Call Link"); }} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 13 }}>{biz.tel}</a> : <span style={{ color: "#b09070", fontSize: 12, fontStyle: "italic" }}>פרטים בפנים</span>}
       </div>
 
       {expanded && (
@@ -92,14 +101,14 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
             {biz.tel && (
               <>
-                <a href={`tel:${biz.tel}`} className="ab p" onClick={e => e.stopPropagation()}>📞 התקשר</a>
-                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g, "").replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#16a34a", borderColor: "#bbf7d0" }}>💬 וואטסאפ</a>
+                <a href={`tel:${biz.tel}`} className="ab p" onClick={e => { e.stopPropagation(); track("Call Button"); }}>📞 התקשר</a>
+                <a href={`https://wa.me/972${biz.tel.replace(/[^0-9]/g, "").replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("WhatsApp"); }} style={{ color: "#16a34a", borderColor: "#bbf7d0" }}>💬 וואטסאפ</a>
               </>
             )}
-            {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
-            {biz.ig && <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>}
-            {biz.fb && biz.fb.startsWith("http") && <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>}
-            {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
+            {biz.site && <a href={biz.site.startsWith("http") ? biz.site : "https://" + biz.site} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("Website"); }} style={{ color: "#7c3aed", borderColor: "#ddd6fe" }}>🌐 אתר</a>}
+            {biz.ig && <a href={biz.ig} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("Instagram"); }} style={{ color: "#e1306c", borderColor: "#fbcfe8" }}>📷 אינסטגרם</a>}
+            {biz.fb && biz.fb.startsWith("http") && <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("Facebook"); }} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>}
+            {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("TikTok"); }} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
           </div>
 
           {isOwner && (
@@ -115,7 +124,6 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
   );
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. מסך העסקים - BusinessesView
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,7 +134,6 @@ function BusinessesView({ onBack }) {
   const [expandedId, setExpandedId] = useState(null);
   const [mounted, setMounted] = useState(false);
   
-  // הוספת עסק
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
@@ -140,7 +147,11 @@ function BusinessesView({ onBack }) {
     return id;
   });
 
-  // שליפת העסקים מפיירבייס בזמן אמת
+  // שליחה לאנליטיקס בעת כניסה למסך העסקים
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/businesses", title: "עסקים בבאר גנים" });
+  }, []);
+
   useEffect(() => {
     const q = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -178,9 +189,10 @@ function BusinessesView({ onBack }) {
     try {
       await addDoc(collection(db, "businesses"), {
         ...newBiz,
-        authorId: deviceId, // כדי שיוכל למחוק את העסק שלו אחר כך
+        authorId: deviceId,
         createdAt: serverTimestamp()
       });
+      ReactGA.event({ category: "Engagement", action: "Add Business", label: newBiz.cat }); // מעקב אנליטיקס
       setShowForm(false);
       setNewBiz({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
     } catch (error) {
@@ -263,7 +275,7 @@ function BusinessesView({ onBack }) {
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({businesses.length})</button>
           <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>🟢 פתוח עכשיו</button>
           {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
-            <button key={c} className={`cc ${activeCat === c ? "act" : ""}`} onClick={() => setActiveCat(c)}>{emoji} {c} ({counts[c]})</button>
+            <button key={c} className={`cc ${activeCat === c ? "act" : ""}`} onClick={() => { setActiveCat(c); ReactGA.event({ category: "Filter", action: "Category Click", label: c }); }}>{emoji} {c} ({counts[c]})</button>
           ) : null)}
         </div>
       </div>
@@ -400,6 +412,11 @@ function MarketView({ onBack }) {
     return id;
   });
 
+  // שליחה לאנליטיקס בעת כניסה למסך השוק
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/market", title: "שוק באר גנים" });
+  }, []);
+
   useEffect(() => {
     const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -473,6 +490,7 @@ function MarketView({ onBack }) {
         authorId: deviceId,
         createdAt: serverTimestamp()
       });
+      ReactGA.event({ category: "Engagement", action: "Add Market Ad", label: newAd.category }); // מעקב אנליטיקס
       setShowForm(false);
       setNewAd({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
     } catch (error) {
@@ -537,7 +555,7 @@ function MarketView({ onBack }) {
             ads.map(ad => (
               <div 
                 key={ad.id} 
-                onClick={() => setSelectedAd(ad)} 
+                onClick={() => { setSelectedAd(ad); ReactGA.event({ category: "Market", action: "View Ad", label: ad.title }); }} 
                 style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s", display: "flex", flexDirection: "column" }}
               >
                 {ad.image && (
@@ -556,7 +574,7 @@ function MarketView({ onBack }) {
                   <p style={{ color: "#475569", fontSize: "12px", marginTop: "4px", marginBottom: "auto", lineHeight: "1.4", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
                   
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "10px" }}>
-                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => e.stopPropagation()} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#25d366", color: "#fff", padding: "6px 12px", borderRadius: "50px", textDecoration: "none", fontSize: "12px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(37,211,102,0.3)" }}>
+                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => { e.stopPropagation(); ReactGA.event({ category: "Market", action: "WhatsApp Fast", label: ad.title }); }} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#25d366", color: "#fff", padding: "6px 12px", borderRadius: "50px", textDecoration: "none", fontSize: "12px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(37,211,102,0.3)" }}>
                       💬 הודעה
                     </a>
                     
@@ -615,10 +633,10 @@ function MarketView({ onBack }) {
               </div>
               
               <div style={{ display: "flex", gap: "10px", flexDirection: "column" }}>
-                <a href={`https://wa.me/972${selectedAd.tel.replace(/^0/, "")}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#25d366", color: "#fff", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
+                <a href={`https://wa.me/972${selectedAd.tel.replace(/^0/, "")}`} onClick={() => ReactGA.event({ category: "Market", action: "WhatsApp Full", label: selectedAd.title })} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#25d366", color: "#fff", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
                   💬 שלח הודעת וואטסאפ למוכר
                 </a>
-                <a href={`tel:${selectedAd.tel}`} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#f1f5f9", color: "#334155", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold" }}>
+                <a href={`tel:${selectedAd.tel}`} onClick={() => ReactGA.event({ category: "Market", action: "Call Full", label: selectedAd.title })} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#f1f5f9", color: "#334155", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold" }}>
                   📞 התקשר למוכר
                 </a>
               </div>
@@ -687,6 +705,11 @@ function MarketView({ onBack }) {
 // 4. מסך הבית - HomeView
 // ─────────────────────────────────────────────────────────────────────────────
 function HomeView({ onNavigate }) {
+  // מעקב כניסה למסך הבית
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: "/", title: "מסך הבית" });
+  }, []);
+
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "linear-gradient(135deg, #fdfbf7 0%, #f4eee3 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <style>{`
