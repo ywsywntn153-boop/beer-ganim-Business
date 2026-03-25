@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (ללא שינוי - בקרוב במסד הנתונים!)
+// 1. נתוני העסקים (כרגע כטקסט - תכף יעברו לפיירבייס!)
 // ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -236,6 +236,7 @@ function BusinessesView({ onBack }) {
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
+      {/* כפתור חזרה קבוע */}
       <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(26, 13, 4, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
         ➔ למסך הראשי
       </button>
@@ -442,7 +443,6 @@ function MarketView({ onBack }) {
           + פרסם מודעה חדשה
         </button>
 
-        {/* --- שינוי הפריסה לגריד של 2 טורים --- */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
           {ads.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "span 2" }}>
@@ -460,7 +460,6 @@ function MarketView({ onBack }) {
                   <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "130px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
                 )}
                 
-                {/* התאמת ריווחים וגודלי פונט כדי שייכנסו יפה ב-2 טורים */}
                 <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
                     <div style={{ flex: 1 }}>
@@ -601,9 +600,43 @@ function MarketView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. מסך הבית - HomeView
+// 4. מסך הבית - HomeView (כאן נמצא כפתור הקסם!)
 // ─────────────────────────────────────────────────────────────────────────────
 function HomeView({ onNavigate }) {
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  // פונקציית הקסם שמעלה את העסקים לפיירבייס!
+  const handleMigrate = async () => {
+    if (!window.confirm("בטוח שאתה רוצה להעלות את כל העסקים למסד הנתונים? (לעשות את זה רק פעם אחת!)")) return;
+    
+    setIsMigrating(true);
+    try {
+      let count = 0;
+      for (const biz of BUSINESSES) {
+        // שומרים כל עסק באוסף חדש בשם "businesses"
+        await addDoc(collection(db, "businesses"), {
+          name: biz.name || "",
+          cat: biz.cat || "שונות",
+          tel: biz.tel || "",
+          hours: biz.hours || "",
+          addr: biz.addr || "באר גנים",
+          site: biz.site || "",
+          ig: biz.ig || "",
+          fb: biz.fb || "",
+          tiktok: biz.tiktok || "",
+          desc: biz.desc || "",
+          createdAt: serverTimestamp()
+        });
+        count++;
+      }
+      alert(`מטורף! ${count} עסקים הועלו בהצלחה לפיירבייס! 🎉`);
+    } catch (error) {
+      console.error(error);
+      alert("הייתה שגיאה בהעלאה. תבדוק את המסוף (Console).");
+    }
+    setIsMigrating(false);
+  };
+
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "linear-gradient(135deg, #fdfbf7 0%, #f4eee3 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <style>{`
@@ -656,6 +689,17 @@ function HomeView({ onNavigate }) {
       </button>
 
       <p style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a" }}>פותח ע"י יונתן יוסף</p>
+
+      {/* כפתור הקסם! */}
+      <button 
+        onClick={handleMigrate} 
+        disabled={isMigrating}
+        style={{ marginTop: "60px", padding: "12px 20px", background: "#ef4444", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: isMigrating ? "not-allowed" : "pointer", boxShadow: "0 4px 6px rgba(239,68,68,0.3)" }}
+      >
+        {isMigrating ? "מעלה נתונים לפיירבייס... (לא לסגור)" : "🚀 כפתור קסם: העבר עסקים לפיירבייס"}
+      </button>
+      <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "5px", fontWeight: "bold" }}>ללחוץ רק פעם אחת כדי לא ליצור כפילויות!</p>
+
     </div>
   );
 }
