@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. נתוני העסקים (ללא שינוי - מחר נעביר אותם למסד נתונים!)
+// 1. נתוני העסקים (ללא שינוי - בקרוב במסד הנתונים!)
 // ─────────────────────────────────────────────────────────────────────────────
 const CATEGORIES = {
   "יופי וטיפוח":        { emoji: "💅", color: "#c4479e", bg: "#fdf0f9" },
@@ -236,7 +236,6 @@ function BusinessesView({ onBack }) {
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
-      {/* כפתור חזרה קבוע (Sticky) */}
       <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(26, 13, 4, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
         ➔ למסך הראשי
       </button>
@@ -424,9 +423,8 @@ function MarketView({ onBack }) {
         <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
       </header>
 
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
+      <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
         
-        {/* --- הסבר על הלוח שהוספתי לבקשתך --- */}
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "12px", padding: "16px", marginBottom: "20px", color: "#1e3a8a", fontSize: "14px", lineHeight: "1.6", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
           <strong style={{ fontSize: "16px", display: "block", marginBottom: "5px" }}>👋 ברוכים הבאים ללוח היישובי!</strong>
           כאן תוכלו לפרסם חפצים למכירה, למסור ציוד בחינם, או לחפש דברים שאתם צריכים מחברים בקהילה שלנו בבאר גנים.
@@ -444,9 +442,10 @@ function MarketView({ onBack }) {
           + פרסם מודעה חדשה
         </button>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* --- שינוי הפריסה לגריד של 2 טורים --- */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
           {ads.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "span 2" }}>
               <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
               אין מודעות כרגע.
             </div>
@@ -455,34 +454,35 @@ function MarketView({ onBack }) {
               <div 
                 key={ad.id} 
                 onClick={() => setSelectedAd(ad)} 
-                style={{ background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s" }}
+                style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s", display: "flex", flexDirection: "column" }}
               >
                 {ad.image && (
-                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "200px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
+                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "130px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
                 )}
                 
-                <div style={{ padding: "16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                    <div>
-                      <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", marginBottom: "6px" }}>{ad.category}</span>
-                      <h3 style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2" }}>{ad.title}</h3>
+                {/* התאמת ריווחים וגודלי פונט כדי שייכנסו יפה ב-2 טורים */}
+                <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", marginBottom: "4px" }}>{ad.category}</span>
+                      <h3 style={{ fontSize: "14px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2", margin: 0 }}>{ad.title}</h3>
                     </div>
-                    <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 10px", borderRadius: "8px", fontSize: "16px", fontWeight: "900" }}>₪{ad.price}</span>
+                    <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 6px", borderRadius: "6px", fontSize: "13px", fontWeight: "900", flexShrink: 0, marginLeft: "4px" }}>₪{ad.price}</span>
                   </div>
                   
-                  <p style={{ color: "#475569", fontSize: "14px", marginTop: "10px", lineHeight: "1.5", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
+                  <p style={{ color: "#475569", fontSize: "12px", marginTop: "4px", marginBottom: "auto", lineHeight: "1.4", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
                   
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "15px", borderTop: "1px solid #f1f5f9", paddingTop: "15px" }}>
-                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => e.stopPropagation()} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#25d366", color: "#fff", padding: "10px 18px", borderRadius: "50px", textDecoration: "none", fontSize: "14px", fontWeight: "bold", boxShadow: "0 2px 8px rgba(37,211,102,0.3)" }}>
-                      💬 שלח הודעה למוכר
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "10px" }}>
+                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => e.stopPropagation()} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#25d366", color: "#fff", padding: "6px 12px", borderRadius: "50px", textDecoration: "none", fontSize: "12px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(37,211,102,0.3)" }}>
+                      💬 הודעה
                     </a>
                     
                     {ad.authorId === deviceId ? (
-                      <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>
-                        🗑️ מחק מודעה
+                      <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
+                        🗑️ מחק
                       </button>
                     ) : (
-                      <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "bold" }}>קרא עוד ➔</span>
+                      <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold" }}>קרא עוד ➔</span>
                     )}
                   </div>
                 </div>
@@ -492,7 +492,6 @@ function MarketView({ onBack }) {
         </div>
       </main>
 
-      {/* פוטר חדש למסך השוק עם פרטי יצירת קשר */}
       <footer style={{ textAlign: "center", padding: "24px 20px", color: "#64748b", fontSize: 14, borderTop: "1px solid #e2e8f0", background: "#f1f5f9", marginTop: "auto" }}>
         <p style={{ fontWeight: 900, color: "#0f172a", fontSize: 16 }}>שוק באר גנים</p>
         <div style={{ marginTop: 12, fontSize: 14, color: "#475569" }}>
