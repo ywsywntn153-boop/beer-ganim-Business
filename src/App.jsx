@@ -70,12 +70,12 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
           <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: cs.bg, color: cs.color, padding: "2px 6px", borderRadius: 20, fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
             {cs.emoji} {biz.cat}
           </div>
-          <h3 style={{ fontSize: 14, fontWeight: 800, color: "#1a0e06", lineHeight: 1.2, margin: 0 }}>{biz.name}</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1a0e06", lineHeight: 1.2, margin: 0 }}>{biz.name}</h3>
         </div>
         <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginLeft: 4 }}>▾</span>
       </div>
       
-      <p style={{ fontSize: 12, color: "#6b5030", marginTop: 4, marginBottom: 8, lineHeight: 1.4, display: expanded ? "block" : "-webkit-box", WebkitLineClamp: expanded ? "none" : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{biz.desc}</p>
+      <p style={{ fontSize: 13, color: "#6b5030", marginTop: 4, marginBottom: 8, lineHeight: 1.4, display: expanded ? "block" : "-webkit-box", WebkitLineClamp: expanded ? "none" : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{biz.desc}</p>
       
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><OpenBadge hours={biz.hours} /></div>
       
@@ -215,7 +215,7 @@ function BusinessesView({ onBack }) {
         .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
         .cc.open-now { border-color: #16a34a; color: #16a34a; }
         .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
-        .card{background:#fff;border-radius:14px;padding:12px; border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+        .card{background:#fff;border-radius:14px;padding:14px; border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
@@ -229,6 +229,12 @@ function BusinessesView({ onBack }) {
         .ex{animation:fu .22s ease}
         .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
         .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
+        
+        /* סידור לגריד רספונסיבי של 3 בשורה למחשב, 2 לטאבלט, 1 לנייד */
+        .biz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        @media(max-width: 950px){ .biz-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media(max-width: 600px){ .biz-grid { grid-template-columns: 1fr; } }
+        
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
@@ -251,7 +257,9 @@ function BusinessesView({ onBack }) {
           <span style={{ position: "absolute", left: 15, top: "50%", transform: "translateY(-50%)", fontSize: 17, pointerEvents: "none" }}>🔍</span>
           <input className="si" type="text" placeholder="חפש עסק, שירות, שם..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+        
+        {/* תיקון הקטגוריות שיהיו בשורה אחת גוללת */}
+        <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({businesses.length})</button>
           <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>🟢 פתוח עכשיו</button>
           {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
@@ -260,7 +268,7 @@ function BusinessesView({ onBack }) {
         </div>
       </div>
 
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px 14px 80px", flex: 1, width: "100%" }}>
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px 80px", flex: 1, width: "100%" }}>
         
         {/* כפתור הוספת עסק */}
         <button 
@@ -275,8 +283,7 @@ function BusinessesView({ onBack }) {
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות לפילטר שבחרת</p></div>
         ) : (
-          {/* גריד של 2 טורים */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
+          <div className="biz-grid">
             {filtered.map((biz, i) => (
               <Card 
                 key={biz.id} 
@@ -306,8 +313,7 @@ function BusinessesView({ onBack }) {
 
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>קטגוריה *</label>
-              {/* תיקון צבעי הקטגוריה */}
-              <select value={newBiz.cat} onChange={e => setNewBiz({...newBiz, cat: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", backgroundColor: "#fff", color: "#1a0e06", fontSize: "14px", WebkitAppearance: "none", appearance: "none" }}>
+              <select value={newBiz.cat} onChange={e => setNewBiz({...newBiz, cat: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", backgroundColor: "#fff", color: "#1a0e06", fontSize: "14px" }}>
                 {Object.keys(CATEGORIES).map(cat => <option key={cat} value={cat} style={{ color: "#1a0e06" }}>{CATEGORIES[cat].emoji} {cat}</option>)}
               </select>
             </div>
@@ -338,7 +344,6 @@ function BusinessesView({ onBack }) {
               <input placeholder="🌐 קישור לאתר" value={newBiz.site} onChange={e => setNewBiz({...newBiz, site: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
               <input placeholder="📘 קישור לפייסבוק" value={newBiz.fb} onChange={e => setNewBiz({...newBiz, fb: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
               <input placeholder="📷 קישור לאינסטגרם" value={newBiz.ig} onChange={e => setNewBiz({...newBiz, ig: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
-              {/* הוספת קישור לטיקטוק */}
               <input placeholder="🎵 קישור לטיקטוק" value={newBiz.tiktok} onChange={e => setNewBiz({...newBiz, tiktok: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
             </div>
             
@@ -522,9 +527,9 @@ function MarketView({ onBack }) {
           + פרסם מודעה חדשה
         </button>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
           {ads.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "span 2" }}>
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "1 / -1" }}>
               <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
               אין מודעות כרגע.
             </div>
@@ -536,7 +541,7 @@ function MarketView({ onBack }) {
                 style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s", display: "flex", flexDirection: "column" }}
               >
                 {ad.image && (
-                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "130px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
+                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "140px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
                 )}
                 
                 <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
