@@ -356,7 +356,6 @@ function MarketView({ onBack, deviceId }) {
         </div>
       </main>
 
-      {/* מודל הצגת מודעה */}
       {selectedAd && (
         <div className="overlay" onClick={() => setSelectedAd(null)}>
           <div className="full-ad-modal" onClick={e => e.stopPropagation()}>
@@ -456,28 +455,24 @@ export default function App() {
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; }
         body { background: #f7f3ed; color: #1a0e06; direction: rtl; }
         
-        /* Header Styles */
         .page-header { padding: 50px 20px; text-align: center; color: white; position: relative; }
         .biz-gradient { background: linear-gradient(135deg, #1a0d04, #573015); }
         .market-gradient { background: linear-gradient(135deg, #0f172a, #334155); }
         .icon-main { font-size: 50px; margin-bottom: 10px; }
         .page-header h1 { font-size: 36px; font-weight: 900; }
         
-        /* Navigation & Search */
         .sticky-bar { position: sticky; top: 0; z-index: 100; background: rgba(247, 243, 237, 0.96); backdrop-filter: blur(10px); padding: 12px; border-bottom: 1px solid #ecdfc8; }
         .search-box input { width: 100%; padding: 14px 22px; border-radius: 50px; border: 2px solid #e8d5b7; outline: none; font-size: 16px; }
         .cat-nav { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 5px; scrollbar-width: none; flex-wrap: nowrap; }
         .pill { padding: 7px 16px; border-radius: 50px; border: 2px solid #e8d5b7; background: white; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: .2s; }
         .pill.act { background: #c4651a; color: white; border-color: #c4651a; box-shadow: 0 4px 10px rgba(196,101,26,0.25); }
         
-        /* Grid Layouts */
         .main-content { max-width: 1200px; margin: auto; padding: 20px; }
         .biz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .market-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         @media(max-width: 950px){ .biz-grid { grid-template-columns: repeat(2, 1fr); } }
         @media(max-width: 600px){ .biz-grid, .market-grid { grid-template-columns: 1fr; } }
         
-        /* Business Card Styles */
         .card { background: white; border-radius: 18px; padding: 18px; border: 1.5px solid #ecdfc8; cursor: pointer; transition: transform .25s, box-shadow .25s; }
         .card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
         .cat-badge { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 12px; margin-bottom: 8px; display: inline-block; }
@@ -490,7 +485,6 @@ export default function App() {
         .card-footer-phone { border-top: 1px solid #f5ede0; padding-top: 10px; font-size: 14px; font-weight: 700; color: #1d4ed8; display: flex; align-items: center; gap: 6px; }
         .card-footer-phone a { text-decoration: none; color: inherit; }
         
-        /* Action Buttons */
         .action-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
         .act-btn { flex: 1; min-width: 80px; text-align: center; padding: 8px; border-radius: 50px; text-decoration: none; font-size: 12px; font-weight: bold; border: 1.5px solid #ddd; color: #333; }
         .tel-bg { background: #c4651a; color: white; border: none; }
@@ -498,7 +492,6 @@ export default function App() {
         .tiktok-bg { background: #000; color: white; border: none; }
         .site-bg { border-color: #7c3aed; color: #7c3aed; }
         
-        /* Market Styles */
         .market-bg-soft { background: #f8fafc; }
         .ad-card { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer; transition: .2s; }
         .ad-thumb { width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid #eee; }
@@ -508,8 +501,7 @@ export default function App() {
         .ad-price { font-size: 18px; color: #2563eb; font-weight: 900; }
         .wa-link { background: #25d366; color: white; padding: 6px 12px; border-radius: 50px; text-decoration: none; font-size: 12px; font-weight: bold; }
         
-        /* Modal & Forms */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justifyContent: center; padding: 20px; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .form-modal { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .form-modal h2 { margin-bottom: 20px; font-weight: 900; }
         .input-group { margin-bottom: 12px; }
@@ -519,7 +511,6 @@ export default function App() {
         .save-btn { width: 100%; padding: 15px; border-radius: 12px; background: #c4651a; color: white; border: none; font-weight: 900; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .save-btn.market-bg { background: #2563eb; }
         
-        /* Home Screen */
         .home-screen { min-height: 100vh; background: linear-gradient(135deg, #fdfbf7, #f4eee3); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
         .hero-text { text-align: center; margin-bottom: 40px; }
         .main-logo { font-size: 70px; }
@@ -531,7 +522,6 @@ export default function App() {
         .market-card-style { background: #0f172a; color: #f8fafc; box-shadow: 0 10px 30px rgba(15,23,42,0.2); }
         .nav-icon { font-size: 45px; }
         
-        /* Utils */
         .fixed-back { position: fixed; top: 15px; right: 15px; z-index: 1000; padding: 8px 18px; border-radius: 50px; border: none; background: rgba(255,255,255,0.15); color: white; cursor: pointer; font-weight: bold; backdrop-filter: blur(5px); }
         .fixed-back.dark { background: rgba(0,0,0,0.05); color: #0f172a; }
         .add-trigger-btn { width: 100%; padding: 16px; border-radius: 15px; border: none; color: white; font-weight: 900; font-size: 16px; cursor: pointer; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
