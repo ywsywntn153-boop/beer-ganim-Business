@@ -54,8 +54,8 @@ function OpenBadge({ hours }) {
   const s = getOpenStatus(hours);
   if (!s) return null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: s === "open" ? "#dcfce7" : "#fee2e2", color: s === "open" ? "#16a34a" : "#dc2626", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20 }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s === "open" ? "#16a34a" : "#dc2626", display: "inline-block" }} />
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: s === "open" ? "#dcfce7" : "#fee2e2", color: s === "open" ? "#16a34a" : "#dc2626", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 20 }}>
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: s === "open" ? "#16a34a" : "#dc2626", display: "inline-block" }} />
       {s === "open" ? "פתוח" : "סגור"}
     </span>
   );
@@ -67,24 +67,29 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
     <div className={`card fa ${mounted ? "vis" : ""}`} style={{ transitionDelay: `${Math.min(idx * 35, 500)}ms`, borderTop: `3px solid ${cs.color}` }} onClick={onToggle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: cs.bg, color: cs.color, padding: "2px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: cs.bg, color: cs.color, padding: "2px 6px", borderRadius: 20, fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
             {cs.emoji} {biz.cat}
           </div>
-          <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1a0e06", lineHeight: 1.3 }}>{biz.name}</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 800, color: "#1a0e06", lineHeight: 1.2, margin: 0 }}>{biz.name}</h3>
         </div>
-        <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginTop: 2 }}>▾</span>
+        <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginLeft: 4 }}>▾</span>
       </div>
-      <p style={{ fontSize: 13, color: "#6b5030", marginBottom: 9, lineHeight: 1.55 }}>{biz.desc}</p>
+      
+      <p style={{ fontSize: 12, color: "#6b5030", marginTop: 4, marginBottom: 8, lineHeight: 1.4, display: expanded ? "block" : "-webkit-box", WebkitLineClamp: expanded ? "none" : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{biz.desc}</p>
+      
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><OpenBadge hours={biz.hours} /></div>
-      <div className="dr" style={{ borderTop: "1px solid #f0e8d8" }}>
-        <span style={{ fontSize: 15, flexShrink: 0 }}>📞</span>
-        {biz.tel ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{biz.tel}</a> : <span style={{ color: "#b09070", fontSize: 13, fontStyle: "italic" }}>לחץ לפרטים</span>}
+      
+      <div className="dr" style={{ borderTop: "1px solid #f0e8d8", paddingTop: 8, paddingBottom: 0 }}>
+        <span style={{ fontSize: 13, flexShrink: 0 }}>📞</span>
+        {biz.tel ? <a href={`tel:${biz.tel}`} onClick={e => e.stopPropagation()} style={{ color: "#1d4ed8", textDecoration: "none", fontWeight: 700, fontSize: 13 }}>{biz.tel}</a> : <span style={{ color: "#b09070", fontSize: 12, fontStyle: "italic" }}>פרטים בפנים</span>}
       </div>
+
       {expanded && (
-        <div className="ex">
-          {biz.addr && biz.addr !== "באר גנים" && <div className="dr"><span style={{ fontSize: 15 }}>📍</span><span style={{ color: "#4a3218" }}>{biz.addr}</span></div>}
-          {biz.hours && <div className="dr"><span style={{ fontSize: 15 }}>🕐</span><span style={{ color: "#4a3218", lineHeight: 1.55 }}>{biz.hours}</span></div>}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 13 }}>
+        <div className="ex" style={{ marginTop: 10 }}>
+          {biz.addr && biz.addr !== "באר גנים" && <div className="dr" style={{ padding: "4px 0" }}><span style={{ fontSize: 13 }}>📍</span><span style={{ color: "#4a3218", fontSize: 12 }}>{biz.addr}</span></div>}
+          {biz.hours && <div className="dr" style={{ padding: "4px 0" }}><span style={{ fontSize: 13 }}>🕐</span><span style={{ color: "#4a3218", lineHeight: 1.4, fontSize: 12 }}>{biz.hours}</span></div>}
+          
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
             {biz.tel && (
               <>
                 <a href={`tel:${biz.tel}`} className="ab p" onClick={e => e.stopPropagation()}>📞 התקשר</a>
@@ -96,9 +101,10 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
             {biz.fb && biz.fb.startsWith("http") && <a href={biz.fb} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#1877f2", borderColor: "#bfdbfe" }}>📘 פייסבוק</a>}
             {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => e.stopPropagation()} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
           </div>
+
           {isOwner && (
-            <div style={{ marginTop: "15px", paddingTop: "10px", borderTop: "1px dashed #ecdfc8", textAlign: "left" }}>
-              <button onClick={(e) => { e.stopPropagation(); onDelete(); }} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", cursor: "pointer" }}>
+            <div style={{ marginTop: "12px", paddingTop: "8px", borderTop: "1px dashed #ecdfc8", textAlign: "left" }}>
+              <button onClick={(e) => { e.stopPropagation(); onDelete(); }} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
                 🗑️ מחק עסק
               </button>
             </div>
@@ -123,7 +129,7 @@ function BusinessesView({ onBack }) {
   // הוספת עסק
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", desc: "" });
+  const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
 
   const [deviceId] = useState(() => {
     let id = localStorage.getItem("beerGanimDeviceId");
@@ -134,7 +140,7 @@ function BusinessesView({ onBack }) {
     return id;
   });
 
-  // שליפת העסקים מפיירבייס בזמן אמת!
+  // שליפת העסקים מפיירבייס בזמן אמת
   useEffect(() => {
     const q = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -176,7 +182,7 @@ function BusinessesView({ onBack }) {
         createdAt: serverTimestamp()
       });
       setShowForm(false);
-      setNewBiz({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", desc: "" });
+      setNewBiz({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
     } catch (error) {
       console.error("Error adding doc:", error);
       alert("שגיאה! הוספת העסק נכשלה.");
@@ -209,21 +215,20 @@ function BusinessesView({ onBack }) {
         .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
         .cc.open-now { border-color: #16a34a; color: #16a34a; }
         .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
-        .card{background:#fff;border-radius:18px;padding:18px;border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden}
+        .card{background:#fff;border-radius:14px;padding:12px; border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
-        .ab{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none}
+        .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
         .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
-        .ab.o{background:#fff;border:2px solid #e8d5b7;color:#555}
+        .ab.o{background:#fff;border:1.5px solid #e8d5b7;color:#555}
         .ab.o:hover{border-color:#c4651a;background:#fff9f4}
-        .dr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:1px solid #f5ede0;font-size:13px}
+        .dr{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:12px}
         .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
         .fa.vis{opacity:1;transform:translateY(0)}
         @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
         .ex{animation:fu .22s ease}
         .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
         .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
-        @media(max-width:600px){.grid{grid-template-columns:1fr!important}}
         ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
@@ -255,7 +260,7 @@ function BusinessesView({ onBack }) {
         </div>
       </div>
 
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "20px 14px 80px", flex: 1 }}>
+      <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px 14px 80px", flex: 1, width: "100%" }}>
         
         {/* כפתור הוספת עסק */}
         <button 
@@ -270,7 +275,8 @@ function BusinessesView({ onBack }) {
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות לפילטר שבחרת</p></div>
         ) : (
-          <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(285px,1fr))", gap: 13 }}>
+          {/* גריד של 2 טורים */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
             {filtered.map((biz, i) => (
               <Card 
                 key={biz.id} 
@@ -295,42 +301,45 @@ function BusinessesView({ onBack }) {
             
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>שם העסק / נותן השירות *</label>
-              <input placeholder="למשל: דני שיפוצים" value={newBiz.name} onChange={e => setNewBiz({...newBiz, name: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo" }} />
+              <input placeholder="למשל: דני שיפוצים" value={newBiz.name} onChange={e => setNewBiz({...newBiz, name: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", color: "#1a0e06", fontSize: "14px" }} />
             </div>
 
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>קטגוריה *</label>
-              <select value={newBiz.cat} onChange={e => setNewBiz({...newBiz, cat: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", background: "#fff" }}>
-                {Object.keys(CATEGORIES).map(cat => <option key={cat} value={cat}>{CATEGORIES[cat].emoji} {cat}</option>)}
+              {/* תיקון צבעי הקטגוריה */}
+              <select value={newBiz.cat} onChange={e => setNewBiz({...newBiz, cat: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", backgroundColor: "#fff", color: "#1a0e06", fontSize: "14px", WebkitAppearance: "none", appearance: "none" }}>
+                {Object.keys(CATEGORIES).map(cat => <option key={cat} value={cat} style={{ color: "#1a0e06" }}>{CATEGORIES[cat].emoji} {cat}</option>)}
               </select>
             </div>
 
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>תיאור קצר של השירות *</label>
-              <textarea placeholder="מה העסק מציע ב-2-3 משפטים..." value={newBiz.desc} onChange={e => setNewBiz({...newBiz, desc: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", minHeight: "60px" }} />
+              <textarea placeholder="מה העסק מציע ב-2-3 משפטים..." value={newBiz.desc} onChange={e => setNewBiz({...newBiz, desc: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", color: "#1a0e06", fontSize: "14px", minHeight: "70px" }} />
             </div>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>טלפון</label>
-                <input placeholder="05XXXXXXXX" type="tel" value={newBiz.tel} onChange={e => setNewBiz({...newBiz, tel: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", direction: "ltr", textAlign: "right" }} />
+                <input placeholder="05XXXXXXXX" type="tel" value={newBiz.tel} onChange={e => setNewBiz({...newBiz, tel: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", color: "#1a0e06", fontSize: "14px", direction: "ltr", textAlign: "right" }} />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>כתובת ביישוב</label>
-                <input placeholder="למשל: רימון 11" value={newBiz.addr} onChange={e => setNewBiz({...newBiz, addr: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo" }} />
+                <input placeholder="למשל: רימון 11" value={newBiz.addr} onChange={e => setNewBiz({...newBiz, addr: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", color: "#1a0e06", fontSize: "14px" }} />
               </div>
             </div>
 
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>שעות פתיחה</label>
-              <input placeholder="למשל: א׳-ה׳ 08:00–17:00" value={newBiz.hours} onChange={e => setNewBiz({...newBiz, hours: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo" }} />
+              <input placeholder="למשל: א׳-ה׳ 08:00–17:00" value={newBiz.hours} onChange={e => setNewBiz({...newBiz, hours: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #e8d5b7", borderRadius: "8px", fontFamily: "Heebo", color: "#1a0e06", fontSize: "14px" }} />
             </div>
 
-            <div style={{ marginBottom: "20px", padding: "10px", background: "#fdfbf7", borderRadius: "8px", border: "1px dashed #e8d5b7" }}>
-              <p style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "8px", color: "#c4651a" }}>קישורים (לא חובה):</p>
-              <input placeholder="קישור לאתר" value={newBiz.site} onChange={e => setNewBiz({...newBiz, site: e.target.value})} style={{ width: "100%", padding: "8px", marginBottom: "5px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr" }} />
-              <input placeholder="קישור לפייסבוק" value={newBiz.fb} onChange={e => setNewBiz({...newBiz, fb: e.target.value})} style={{ width: "100%", padding: "8px", marginBottom: "5px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr" }} />
-              <input placeholder="קישור לאינסטגרם" value={newBiz.ig} onChange={e => setNewBiz({...newBiz, ig: e.target.value})} style={{ width: "100%", padding: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr" }} />
+            <div style={{ marginBottom: "20px", padding: "14px", background: "#fdfbf7", borderRadius: "8px", border: "1px dashed #e8d5b7" }}>
+              <p style={{ fontSize: "13px", fontWeight: "bold", marginBottom: "10px", color: "#c4651a" }}>קישורים (לא חובה):</p>
+              <input placeholder="🌐 קישור לאתר" value={newBiz.site} onChange={e => setNewBiz({...newBiz, site: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
+              <input placeholder="📘 קישור לפייסבוק" value={newBiz.fb} onChange={e => setNewBiz({...newBiz, fb: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
+              <input placeholder="📷 קישור לאינסטגרם" value={newBiz.ig} onChange={e => setNewBiz({...newBiz, ig: e.target.value})} style={{ width: "100%", padding: "10px", marginBottom: "8px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
+              {/* הוספת קישור לטיקטוק */}
+              <input placeholder="🎵 קישור לטיקטוק" value={newBiz.tiktok} onChange={e => setNewBiz({...newBiz, tiktok: e.target.value})} style={{ width: "100%", padding: "10px", border: "1px solid #e8d5b7", borderRadius: "6px", fontSize: "13px", direction: "ltr", color: "#1a0e06" }} />
             </div>
             
             <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "16px", cursor: "pointer", marginBottom: "10px", boxShadow: "0 4px 12px rgba(196,101,26,.3)" }}>
@@ -356,7 +365,7 @@ function BusinessesView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView (נשאר עם 2 טורים ועיצוב כמו מקודם)
+// 3. מסך השוק - MarketView
 // ─────────────────────────────────────────────────────────────────────────────
 const MARKET_CATEGORIES = [
   "ריהוט לבית ולגינה",
@@ -670,7 +679,7 @@ function MarketView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. מסך הבית - HomeView (בלי כפתור הקסם!)
+// 4. מסך הבית - HomeView
 // ─────────────────────────────────────────────────────────────────────────────
 function HomeView({ onNavigate }) {
   return (
