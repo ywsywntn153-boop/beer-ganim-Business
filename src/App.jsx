@@ -16,7 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- פונקציית מעקב בטוחה (מחליפה את react-ga4) ---
+// --- פונקציית מעקב בטוחה ---
 const trackEvent = (action, category, label) => {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
     window.gtag("event", action, {
@@ -73,7 +73,6 @@ function OpenBadge({ hours }) {
 function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
   
-  // מעקב קליקים
   const track = (actionName) => {
     trackEvent(actionName, "Business", biz.name);
   };
@@ -117,6 +116,7 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit
             {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("TikTok"); }} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
           </div>
 
+          {/* מציג את אפשרויות העריכה והמחיקה אם אתה הבעלים או המנהל */}
           {isOwner && (
             <div style={{ marginTop: "12px", paddingTop: "8px", borderTop: "1px dashed #ecdfc8", textAlign: "left", display: "flex", gap: "8px" }}>
               <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
@@ -136,7 +136,7 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. מסך העסקים - BusinessesView
 // ─────────────────────────────────────────────────────────────────────────────
-function BusinessesView({ onBack }) {
+function BusinessesView({ onBack, isAdmin }) {
   const [businesses, setBusinesses] = useState([]);
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("הכל");
@@ -145,7 +145,7 @@ function BusinessesView({ onBack }) {
   
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [editingBizId, setEditingBizId] = useState(null); // זיהוי אם אנחנו במצב עריכה
+  const [editingBizId, setEditingBizId] = useState(null); 
   const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
 
   const [deviceId] = useState(() => {
@@ -209,26 +209,14 @@ function BusinessesView({ onBack }) {
     setLoading(true);
     try {
       if (editingBizId) {
-        // עדכון עסק קיים
         await updateDoc(doc(db, "businesses", editingBizId), {
-          name: newBiz.name,
-          cat: newBiz.cat,
-          desc: newBiz.desc,
-          tel: newBiz.tel,
-          addr: newBiz.addr,
-          hours: newBiz.hours,
-          site: newBiz.site,
-          ig: newBiz.ig,
-          fb: newBiz.fb,
-          tiktok: newBiz.tiktok
+          name: newBiz.name, cat: newBiz.cat, desc: newBiz.desc, tel: newBiz.tel, addr: newBiz.addr,
+          hours: newBiz.hours, site: newBiz.site, ig: newBiz.ig, fb: newBiz.fb, tiktok: newBiz.tiktok
         });
         trackEvent("Edit Business", "Engagement", newBiz.cat);
       } else {
-        // הוספת עסק חדש
         await addDoc(collection(db, "businesses"), {
-          ...newBiz,
-          authorId: deviceId,
-          createdAt: serverTimestamp()
+          ...newBiz, authorId: deviceId, createdAt: serverTimestamp()
         });
         trackEvent("Add Business", "Engagement", newBiz.cat);
       }
@@ -269,9 +257,7 @@ function BusinessesView({ onBack }) {
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
-        .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
         .ab.o{background:#fff;border:1.5px solid #e8d5b7;color:#555}
-        .ab.o:hover{border-color:#c4651a;background:#fff9f4}
         .dr{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:12px}
         .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
         .fa.vis{opacity:1;transform:translateY(0)}
@@ -280,15 +266,11 @@ function BusinessesView({ onBack }) {
         .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
         .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
         
-        /* סידור לגריד רספונסיבי של 3 בשורה למחשב, 2 לטאבלט, 1 לנייד */
         .biz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         @media(max-width: 950px){ .biz-grid { grid-template-columns: repeat(2, 1fr); } }
         @media(max-width: 600px){ .biz-grid { grid-template-columns: 1fr; } }
-        
-        ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#c4a97d;border-radius:3px}
       `}</style>
 
-      {/* כפתור חזרה קבוע */}
       <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(26, 13, 4, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
         ➔ למסך הראשי
       </button>
@@ -308,7 +290,6 @@ function BusinessesView({ onBack }) {
           <input className="si" type="text" placeholder="חפש עסק, שירות, שם..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         
-        {/* תיקון הקטגוריות שיהיו בשורה אחת גוללת */}
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({businesses.length})</button>
           <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>🟢 פתוח עכשיו</button>
@@ -319,12 +300,7 @@ function BusinessesView({ onBack }) {
       </div>
 
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 14px 80px", flex: 1, width: "100%" }}>
-        
-        {/* כפתור הוספת עסק */}
-        <button 
-          onClick={() => setShowForm(true)} 
-          style={{ width: "100%", padding: "15px", marginBottom: "20px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(196,101,26,.3)" }}
-        >
+        <button onClick={() => setShowForm(true)} style={{ width: "100%", padding: "15px", marginBottom: "20px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(196,101,26,.3)" }}>
           + הוסף את העסק שלך (חינם)
         </button>
 
@@ -342,7 +318,7 @@ function BusinessesView({ onBack }) {
                 expanded={expandedId === biz.id} 
                 onToggle={() => setExpandedId(expandedId === biz.id ? null : biz.id)} 
                 mounted={mounted} 
-                isOwner={biz.authorId === deviceId}
+                isOwner={biz.authorId === deviceId || isAdmin} 
                 onDelete={() => handleDeleteBiz(biz.id)}
                 onEdit={() => openEditForm(biz)}
               />
@@ -351,7 +327,6 @@ function BusinessesView({ onBack }) {
         )}
       </main>
 
-      {/* ---- חלון פופ-אפ להוספת עסק ---- */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(30,20,10,0.85)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
           <form onSubmit={handleAddBiz} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", border: "2px solid #ecdfc8" }}>
@@ -434,12 +409,12 @@ const MARKET_CATEGORIES = [
   "שונות"
 ];
 
-function MarketView({ onBack }) {
+function MarketView({ onBack, isAdmin }) {
   const [ads, setAds] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null); 
-  const [editingAdId, setEditingAdId] = useState(null); // זיהוי עריכה בשוק
+  const [editingAdId, setEditingAdId] = useState(null);
   
   const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
 
@@ -532,33 +507,19 @@ function MarketView({ onBack }) {
     setLoading(true);
     try {
       if (editingAdId) {
-        // עדכון מודעה קיימת
         await updateDoc(doc(db, "ads", editingAdId), {
-          title: newAd.title,
-          category: newAd.category,
-          price: newAd.price,
-          desc: newAd.desc,
-          tel: cleanPhone,
-          image: newAd.image
+          title: newAd.title, category: newAd.category, price: newAd.price,
+          desc: newAd.desc, tel: cleanPhone, image: newAd.image
         });
         trackEvent("Edit Market Ad", "Engagement", newAd.category);
-        
-        // עדכון החלון הפתוח אם אנחנו עורכים את מה שפתוח כרגע
         if (selectedAd && selectedAd.id === editingAdId) {
           setSelectedAd({...selectedAd, ...newAd, tel: cleanPhone});
         }
       } else {
-        // מודעה חדשה
         await addDoc(collection(db, "ads"), {
-          title: newAd.title,
-          category: newAd.category,
-          price: newAd.price,
-          desc: newAd.desc,
-          tel: cleanPhone,
-          image: newAd.image,
-          date: new Date().toLocaleDateString("he-IL"),
-          authorId: deviceId,
-          createdAt: serverTimestamp()
+          title: newAd.title, category: newAd.category, price: newAd.price, desc: newAd.desc,
+          tel: cleanPhone, image: newAd.image, date: new Date().toLocaleDateString("he-IL"),
+          authorId: deviceId, createdAt: serverTimestamp()
         });
         trackEvent("Add Market Ad", "Engagement", newAd.category);
       }
@@ -648,7 +609,7 @@ function MarketView({ onBack }) {
                       💬 הודעה
                     </a>
                     
-                    {ad.authorId === deviceId ? (
+                    {ad.authorId === deviceId || isAdmin ? (
                       <div style={{ display: "flex", gap: "6px" }}>
                         <button onClick={(e) => openEditAdForm(ad, e)} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
                           ✏️ ערוך
@@ -777,12 +738,39 @@ function MarketView({ onBack }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. מסך הבית - HomeView
+// 4. מסך הבית - HomeView (כולל דלת סתרים למנהל)
 // ─────────────────────────────────────────────────────────────────────────────
-function HomeView({ onNavigate }) {
+function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
+  const [clicks, setClicks] = useState(0);
+
   useEffect(() => {
     trackEvent("page_view", "Navigation", "Home View");
   }, []);
+
+  const handleAdminClick = () => {
+    if (isAdmin) {
+      if (window.confirm("לצאת ממצב מנהל?")) {
+        localStorage.removeItem("beerGanimAdmin");
+        setIsAdmin(false);
+      }
+      return;
+    }
+    
+    const newClicks = clicks + 1;
+    setClicks(newClicks);
+    
+    if (newClicks >= 5) {
+      const pwd = prompt("הכנס קוד מנהל סודי:");
+      if (pwd === "123456") {
+        localStorage.setItem("beerGanimAdmin", "true");
+        setIsAdmin(true);
+        alert("ברוך הבא! הוגדרת כמנהל המערכת. כעת תוכל למחוק ולערוך הכל.");
+      } else if (pwd !== null) {
+        alert("קוד שגוי.");
+      }
+      setClicks(0);
+    }
+  };
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "linear-gradient(135deg, #fdfbf7 0%, #f4eee3 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px" }}>
@@ -834,17 +822,19 @@ function HomeView({ onNavigate }) {
         <span style={{ fontSize: "14px", color: "#94a3b8" }}>יד שניה, קהילה ומכירות</span>
       </button>
 
-      <p style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a" }}>פותח ע"י יונתן יוסף</p>
+      <p onClick={handleAdminClick} style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a", cursor: "pointer", userSelect: "none" }}>
+        פותח ע"י יונתן יוסף {isAdmin ? "👑" : ""}
+      </p>
     </div>
   );
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [currentView, setCurrentView] = useState("home"); 
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("beerGanimAdmin") === "true");
 
   return (
     <>
@@ -855,9 +845,9 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
       `}</style>
 
-      {currentView === "home" && <HomeView onNavigate={setCurrentView} />}
-      {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} />}
-      {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} />}
+      {currentView === "home" && <HomeView onNavigate={setCurrentView} isAdmin={isAdmin} setIsAdmin={setIsAdmin} />}
+      {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} isAdmin={isAdmin} />}
+      {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} isAdmin={isAdmin} />}
     </>
   );
 }
