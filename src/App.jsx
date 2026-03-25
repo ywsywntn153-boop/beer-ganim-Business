@@ -755,7 +755,6 @@ function HomeView({ onNavigate }) {
       <button className="home-btn btn-biz" onClick={() => onNavigate("businesses")}>
         <span style={{ fontSize: "40px" }}>🌿</span>
         <span style={{ fontSize: "22px", fontWeight: "800" }}>עסקים בבאר גנים</span>
-        <span style={{ fontSize: "14px", color: "#c4a97d" }}>כל העסקים במסד הנתונים</span>
       </button>
 
       <button className="home-btn btn-market" onClick={() => onNavigate("market")}>
@@ -768,8 +767,6 @@ function HomeView({ onNavigate }) {
     </div>
   );
 }
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
