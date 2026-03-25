@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 // --- החיבור שלך לפיירבייס ---
 const firebaseConfig = {
@@ -70,7 +70,7 @@ function OpenBadge({ hours }) {
   );
 }
 
-function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
+function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
   
   // מעקב קליקים
@@ -118,7 +118,10 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete }) {
           </div>
 
           {isOwner && (
-            <div style={{ marginTop: "12px", paddingTop: "8px", borderTop: "1px dashed #ecdfc8", textAlign: "left" }}>
+            <div style={{ marginTop: "12px", paddingTop: "8px", borderTop: "1px dashed #ecdfc8", textAlign: "left", display: "flex", gap: "8px" }}>
+              <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
+                ✏️ ערוך עסק
+              </button>
               <button onClick={(e) => { e.stopPropagation(); onDelete(); }} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
                 🗑️ מחק עסק
               </button>
@@ -142,6 +145,7 @@ function BusinessesView({ onBack }) {
   
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingBizId, setEditingBizId] = useState(null); // זיהוי אם אנחנו במצב עריכה
   const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
 
   const [deviceId] = useState(() => {
@@ -183,6 +187,18 @@ function BusinessesView({ onBack }) {
     return c;
   }, [businesses]);
 
+  const openEditForm = (biz) => {
+    setNewBiz(biz);
+    setEditingBizId(biz.id);
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingBizId(null);
+    setNewBiz({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
+  };
+
   const handleAddBiz = async (e) => {
     e.preventDefault();
     if (!newBiz.name || !newBiz.cat || !newBiz.desc) {
@@ -192,17 +208,34 @@ function BusinessesView({ onBack }) {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "businesses"), {
-        ...newBiz,
-        authorId: deviceId,
-        createdAt: serverTimestamp()
-      });
-      trackEvent("Add Business", "Engagement", newBiz.cat);
-      setShowForm(false);
-      setNewBiz({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
+      if (editingBizId) {
+        // עדכון עסק קיים
+        await updateDoc(doc(db, "businesses", editingBizId), {
+          name: newBiz.name,
+          cat: newBiz.cat,
+          desc: newBiz.desc,
+          tel: newBiz.tel,
+          addr: newBiz.addr,
+          hours: newBiz.hours,
+          site: newBiz.site,
+          ig: newBiz.ig,
+          fb: newBiz.fb,
+          tiktok: newBiz.tiktok
+        });
+        trackEvent("Edit Business", "Engagement", newBiz.cat);
+      } else {
+        // הוספת עסק חדש
+        await addDoc(collection(db, "businesses"), {
+          ...newBiz,
+          authorId: deviceId,
+          createdAt: serverTimestamp()
+        });
+        trackEvent("Add Business", "Engagement", newBiz.cat);
+      }
+      closeForm();
     } catch (error) {
-      console.error("Error adding doc:", error);
-      alert("שגיאה! הוספת העסק נכשלה.");
+      console.error("Error adding/updating doc:", error);
+      alert("שגיאה! הפעולה נכשלה.");
     }
     setLoading(false);
   };
@@ -311,6 +344,7 @@ function BusinessesView({ onBack }) {
                 mounted={mounted} 
                 isOwner={biz.authorId === deviceId}
                 onDelete={() => handleDeleteBiz(biz.id)}
+                onEdit={() => openEditForm(biz)}
               />
             ))}
           </div>
@@ -321,7 +355,7 @@ function BusinessesView({ onBack }) {
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(30,20,10,0.85)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
           <form onSubmit={handleAddBiz} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", border: "2px solid #ecdfc8" }}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#1a0e06", fontWeight: "900" }}>רישום עסק חדש</h2>
+            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#1a0e06", fontWeight: "900" }}>{editingBizId ? "עריכת עסק" : "רישום עסק חדש"}</h2>
             
             <div style={{ marginBottom: "12px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#6b5030" }}>שם העסק / נותן השירות *</label>
@@ -365,10 +399,10 @@ function BusinessesView({ onBack }) {
             </div>
             
             <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg,#c4651a,#e8a24e)", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "16px", cursor: "pointer", marginBottom: "10px", boxShadow: "0 4px 12px rgba(196,101,26,.3)" }}>
-              {loading ? "מוסיף..." : "הוסף עסק למדריך!"}
+              {loading ? "שומר..." : editingBizId ? "שמור שינויים" : "הוסף עסק למדריך!"}
             </button>
             
-            <button type="button" onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "transparent", color: "#b09070", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={closeForm} style={{ width: "100%", padding: "12px", background: "transparent", color: "#b09070", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
               ביטול וחזרה
             </button>
           </form>
@@ -405,6 +439,7 @@ function MarketView({ onBack }) {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null); 
+  const [editingAdId, setEditingAdId] = useState(null); // זיהוי עריכה בשוק
   
   const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
 
@@ -429,6 +464,19 @@ function MarketView({ onBack }) {
     });
     return () => unsubscribe();
   }, []);
+
+  const openEditAdForm = (ad, e) => {
+    e.stopPropagation();
+    setNewAd(ad);
+    setEditingAdId(ad.id);
+    setShowForm(true);
+  };
+
+  const closeAdForm = () => {
+    setShowForm(false);
+    setEditingAdId(null);
+    setNewAd({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -483,20 +531,38 @@ function MarketView({ onBack }) {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "ads"), {
-        title: newAd.title,
-        category: newAd.category,
-        price: newAd.price,
-        desc: newAd.desc,
-        tel: cleanPhone,
-        image: newAd.image,
-        date: new Date().toLocaleDateString("he-IL"),
-        authorId: deviceId,
-        createdAt: serverTimestamp()
-      });
-      trackEvent("Add Market Ad", "Engagement", newAd.category);
-      setShowForm(false);
-      setNewAd({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
+      if (editingAdId) {
+        // עדכון מודעה קיימת
+        await updateDoc(doc(db, "ads", editingAdId), {
+          title: newAd.title,
+          category: newAd.category,
+          price: newAd.price,
+          desc: newAd.desc,
+          tel: cleanPhone,
+          image: newAd.image
+        });
+        trackEvent("Edit Market Ad", "Engagement", newAd.category);
+        
+        // עדכון החלון הפתוח אם אנחנו עורכים את מה שפתוח כרגע
+        if (selectedAd && selectedAd.id === editingAdId) {
+          setSelectedAd({...selectedAd, ...newAd, tel: cleanPhone});
+        }
+      } else {
+        // מודעה חדשה
+        await addDoc(collection(db, "ads"), {
+          title: newAd.title,
+          category: newAd.category,
+          price: newAd.price,
+          desc: newAd.desc,
+          tel: cleanPhone,
+          image: newAd.image,
+          date: new Date().toLocaleDateString("he-IL"),
+          authorId: deviceId,
+          createdAt: serverTimestamp()
+        });
+        trackEvent("Add Market Ad", "Engagement", newAd.category);
+      }
+      closeAdForm();
     } catch (error) {
       console.error("Error adding doc:", error);
       alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס.");
@@ -583,9 +649,14 @@ function MarketView({ onBack }) {
                     </a>
                     
                     {ad.authorId === deviceId ? (
-                      <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
-                        🗑️ מחק
-                      </button>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button onClick={(e) => openEditAdForm(ad, e)} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
+                          ✏️ ערוך
+                        </button>
+                        <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
+                          🗑️ מחק
+                        </button>
+                      </div>
                     ) : (
                       <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold" }}>קרא עוד ➔</span>
                     )}
@@ -649,11 +720,11 @@ function MarketView({ onBack }) {
         </div>
       )}
 
-      {/* חלון הוספת מודעה */}
+      {/* חלון הוספת/עריכת מודעה */}
       {showForm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
           <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a", fontWeight: "900" }}>פרסום מודעה חדשה</h2>
+            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a", fontWeight: "900" }}>{editingAdId ? "עריכת מודעה" : "פרסום מודעה חדשה"}</h2>
             
             <div style={{ marginBottom: "15px" }}>
               <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>כותרת המודעה *</label>
@@ -691,10 +762,10 @@ function MarketView({ onBack }) {
             </div>
             
             <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "16px", cursor: "pointer", marginBottom: "10px", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
-              {loading ? "מפרסם..." : "פרסם עכשיו בלוח"}
+              {loading ? "שומר..." : editingAdId ? "שמור שינויים" : "פרסם עכשיו בלוח"}
             </button>
             
-            <button type="button" onClick={() => setShowForm(false)} style={{ width: "100%", padding: "12px", background: "transparent", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={closeAdForm} style={{ width: "100%", padding: "12px", background: "transparent", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
               ביטול וחזרה
             </button>
           </form>
@@ -767,6 +838,8 @@ function HomeView({ onNavigate }) {
     </div>
   );
 }
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
