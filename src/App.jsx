@@ -205,13 +205,14 @@ function BusinessesView({ onBack, isAdmin }) {
     let baseList = businesses;
     if (activeCat === "פתוח עכשיו") baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
     else if (activeCat === "מועדפים") baseList = baseList.filter(b => favorites.includes(b.id));
+    else if (activeCat === "שלי") baseList = baseList.filter(b => b.authorId === deviceId); // הצגת "העסקים שלי"
     else if (activeCat !== "הכל") baseList = baseList.filter(b => b.cat === activeCat);
     
     const q = search.trim();
     if (!q) return baseList;
     const fuse = new Fuse(baseList, { keys: ["name", "desc", "addr", "cat"], threshold: 0.4, distance: 100 });
     return fuse.search(q).map(result => result.item);
-  }, [search, activeCat, businesses, favorites]);
+  }, [search, activeCat, businesses, favorites, deviceId]);
 
   const counts = useMemo(() => {
     const c = {};
@@ -287,6 +288,8 @@ function BusinessesView({ onBack, isAdmin }) {
         .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); border-color: transparent;}
         .cc.fav-btn { border-color: #ef4444; color: #ef4444; }
         .cc.fav-btn.act { background: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.32); border-color: transparent;}
+        .cc.my-ads-btn { border-color: #8b5cf6; color: #8b5cf6; }
+        .cc.my-ads-btn.act { background: #8b5cf6; color: #fff; box-shadow: 0 4px 12px rgba(139,92,246,.32); border-color: transparent;}
         .card{background:#fff;border-radius:14px;padding:14px; border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
@@ -330,6 +333,11 @@ function BusinessesView({ onBack, isAdmin }) {
           <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
             ❤️ מועדפים ({favorites.length})
           </button>
+
+          {/* כפתור האזור שלי */}
+          <button className={`cc my-ads-btn ${activeCat === "שלי" ? "act" : ""}`} onClick={() => setActiveCat("שלי")}>
+            👤 העסקים שלי
+          </button>
           
           <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>🟢 פתוח עכשיו</button>
           {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
@@ -347,9 +355,9 @@ function BusinessesView({ onBack, isAdmin }) {
           <div style={{ textAlign: "center", padding: "40px", color: "#b09070" }}>טוען עסקים... ⏳</div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}>
-            <div style={{ fontSize: 48 }}>{activeCat === "מועדפים" ? "🤍" : "🔍"}</div>
+            <div style={{ fontSize: 48 }}>{activeCat === "מועדפים" ? "🤍" : activeCat === "שלי" ? "👤" : "🔍"}</div>
             <p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>
-              {activeCat === "מועדפים" ? "עוד לא שמרת עסקים במועדפים" : "לא נמצאו תוצאות לפילטר שבחרת"}
+              {activeCat === "מועדפים" ? "עוד לא שמרת עסקים במועדפים" : activeCat === "שלי" ? "עוד לא פרסמת אף עסק" : "לא נמצאו תוצאות לפילטר שבחרת"}
             </p>
           </div>
         ) : (
@@ -456,7 +464,7 @@ const MARKET_CATEGORIES = [
 
 function MarketView({ onBack, isAdmin }) {
   const [ads, setAds] = useState([]);
-  const [activeCat, setActiveCat] = useState("הכל"); // קטגוריה נבחרת בשוק
+  const [activeCat, setActiveCat] = useState("הכל"); 
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null); 
@@ -464,7 +472,6 @@ function MarketView({ onBack, isAdmin }) {
   
   const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
 
-  // מועדפים של השוק
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem("beerGanimMarketFavs");
     return saved ? JSON.parse(saved) : [];
@@ -483,7 +490,6 @@ function MarketView({ onBack, isAdmin }) {
     trackEvent("page_view", "Navigation", "Market View");
   }, []);
 
-  // שמירת מועדפים כשהם משתנים
   useEffect(() => {
     localStorage.setItem("beerGanimMarketFavs", JSON.stringify(favorites));
   }, [favorites]);
@@ -513,11 +519,13 @@ function MarketView({ onBack, isAdmin }) {
     let baseList = ads;
     if (activeCat === "מועדפים") {
       baseList = baseList.filter(ad => favorites.includes(ad.id));
+    } else if (activeCat === "שלי") {
+      baseList = baseList.filter(ad => ad.authorId === deviceId); // הצגת "המודעות שלי"
     } else if (activeCat !== "הכל") {
       baseList = baseList.filter(ad => ad.category === activeCat);
     }
     return baseList;
-  }, [ads, activeCat, favorites]);
+  }, [ads, activeCat, favorites, deviceId]);
 
   const openEditAdForm = (ad, e) => {
     e.stopPropagation();
@@ -625,14 +633,14 @@ function MarketView({ onBack, isAdmin }) {
 
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", display: "flex", flexDirection: "column" }}>
-      
-      {/* הוספת עיצוב לכפתורי הסינון בשוק */}
       <style>{`
         .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #cbd5e1;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
         .cc:hover{border-color:#2563eb;color:#2563eb}
         .cc.act{background:linear-gradient(135deg,#2563eb,#60a5fa);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.32)}
         .cc.fav-btn { border-color: #ef4444; color: #ef4444; }
         .cc.fav-btn.act { background: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.32); border-color: transparent;}
+        .cc.my-ads-btn { border-color: #8b5cf6; color: #8b5cf6; }
+        .cc.my-ads-btn.act { background: #8b5cf6; color: #fff; box-shadow: 0 4px 12px rgba(139,92,246,.32); border-color: transparent;}
       `}</style>
 
       <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
@@ -645,13 +653,17 @@ function MarketView({ onBack, isAdmin }) {
         <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
       </header>
 
-      {/* שורת סינון לשוק */}
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(248, 250, 252, 0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e2e8f0", padding: "10px 16px" }}>
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>📦 הכל ({ads.length})</button>
           
           <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
             ❤️ מועדפים ({favorites.length})
+          </button>
+
+          {/* כפתור האזור שלי לשוק */}
+          <button className={`cc my-ads-btn ${activeCat === "שלי" ? "act" : ""}`} onClick={() => setActiveCat("שלי")}>
+            👤 המודעות שלי
           </button>
           
           {MARKET_CATEGORIES.map(cat => {
@@ -688,9 +700,9 @@ function MarketView({ onBack, isAdmin }) {
             </div>
           ) : filteredAds.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "1 / -1" }}>
-              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>{activeCat === "מועדפים" ? "🤍" : "🔍"}</span>
+              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>{activeCat === "מועדפים" ? "🤍" : activeCat === "שלי" ? "👤" : "🔍"}</span>
               <p style={{ fontSize: 16, fontWeight: 700 }}>
-                {activeCat === "מועדפים" ? "עוד לא שמרת מודעות במועדפים" : "לא נמצאו מודעות בקטגוריה זו"}
+                {activeCat === "מועדפים" ? "עוד לא שמרת מודעות במועדפים" : activeCat === "שלי" ? "עוד לא העלית שום מודעה" : "לא נמצאו מודעות בקטגוריה זו"}
               </p>
             </div>
           ) : (
