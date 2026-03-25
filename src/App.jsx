@@ -87,7 +87,6 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit
           <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1a0e06", lineHeight: 1.2, margin: 0 }}>{biz.name}</h3>
         </div>
         
-        {/* כפתורי מועדפים והרחבה */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <button 
             onClick={(e) => { e.stopPropagation(); onToggleFav(); }} 
@@ -158,7 +157,6 @@ function BusinessesView({ onBack, isAdmin }) {
   const [editingBizId, setEditingBizId] = useState(null); 
   const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
 
-  // זיכרון של המועדפים
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem("beerGanimFavs");
     return saved ? JSON.parse(saved) : [];
@@ -177,7 +175,6 @@ function BusinessesView({ onBack, isAdmin }) {
     trackEvent("page_view", "Navigation", "Businesses View");
   }, []);
 
-  // שמירת מועדפים כשהם משתנים
   useEffect(() => {
     localStorage.setItem("beerGanimFavs", JSON.stringify(favorites));
   }, [favorites]);
@@ -294,9 +291,7 @@ function BusinessesView({ onBack, isAdmin }) {
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
-        .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
         .ab.o{background:#fff;border:1.5px solid #e8d5b7;color:#555}
-        .ab.o:hover{border-color:#c4651a;background:#fff9f4}
         .dr{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:12px}
         .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
         .fa.vis{opacity:1;transform:translateY(0)}
@@ -332,7 +327,6 @@ function BusinessesView({ onBack, isAdmin }) {
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({businesses.length})</button>
           
-          {/* כפתור מועדפים חדש */}
           <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
             ❤️ מועדפים ({favorites.length})
           </button>
@@ -441,7 +435,6 @@ function BusinessesView({ onBack, isAdmin }) {
         <p style={{ marginTop: 10, color: "#4a3218", fontWeight: 500 }}>בעל עסק? רוצה שנבנה לך אתר? <a href="https://wa.me/9720559139013?text=שלום, ראיתי את האתר של באר גנים ואשמח לקבל פרטים על בניית אתר לעסק שלי!" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 800, textDecoration: "underline" }}>לחץ כאן</a></p>
         <div style={{ marginTop: 12, fontSize: 13, color: "#8a6a4a" }}>🏪 מצאתם באג? תרצו לעדכן פרטים? <a href="https://wa.me/9720559139013?text=שלום יונתן, ראיתי תקלה/אשמח לעדכן פרטים בעסקים:" target="_blank" rel="noreferrer" style={{ color: "#c4651a", fontWeight: 700, textDecoration: "underline" }}>שלחו לי הודעה</a></div>
       </footer>
-      <a href={`https://wa.me/972${waFloat.replace(/^0/, "")}`} target="_blank" rel="noreferrer" className="wa">💬</a>
     </div>
   );
 }
@@ -463,12 +456,19 @@ const MARKET_CATEGORIES = [
 
 function MarketView({ onBack, isAdmin }) {
   const [ads, setAds] = useState([]);
+  const [activeCat, setActiveCat] = useState("הכל"); // קטגוריה נבחרת בשוק
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null); 
   const [editingAdId, setEditingAdId] = useState(null);
   
   const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
+
+  // מועדפים של השוק
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem("beerGanimMarketFavs");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [deviceId] = useState(() => {
     let id = localStorage.getItem("beerGanimDeviceId");
@@ -483,6 +483,11 @@ function MarketView({ onBack, isAdmin }) {
     trackEvent("page_view", "Navigation", "Market View");
   }, []);
 
+  // שמירת מועדפים כשהם משתנים
+  useEffect(() => {
+    localStorage.setItem("beerGanimMarketFavs", JSON.stringify(favorites));
+  }, [favorites]);
+
   useEffect(() => {
     const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -491,6 +496,28 @@ function MarketView({ onBack, isAdmin }) {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleToggleFav = (id, title) => {
+    setFavorites(prev => {
+      if (prev.includes(id)) {
+        trackEvent("Remove Market Favorite", "Engagement", title);
+        return prev.filter(fId => fId !== id);
+      } else {
+        trackEvent("Add Market Favorite", "Engagement", title);
+        return [...prev, id];
+      }
+    });
+  };
+
+  const filteredAds = useMemo(() => {
+    let baseList = ads;
+    if (activeCat === "מועדפים") {
+      baseList = baseList.filter(ad => favorites.includes(ad.id));
+    } else if (activeCat !== "הכל") {
+      baseList = baseList.filter(ad => ad.category === activeCat);
+    }
+    return baseList;
+  }, [ads, activeCat, favorites]);
 
   const openEditAdForm = (ad, e) => {
     e.stopPropagation();
@@ -599,6 +626,15 @@ function MarketView({ onBack, isAdmin }) {
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", display: "flex", flexDirection: "column" }}>
       
+      {/* הוספת עיצוב לכפתורי הסינון בשוק */}
+      <style>{`
+        .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #cbd5e1;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+        .cc:hover{border-color:#2563eb;color:#2563eb}
+        .cc.act{background:linear-gradient(135deg,#2563eb,#60a5fa);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.32)}
+        .cc.fav-btn { border-color: #ef4444; color: #ef4444; }
+        .cc.fav-btn.act { background: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.32); border-color: transparent;}
+      `}</style>
+
       <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
         ➔ למסך הראשי
       </button>
@@ -609,16 +645,32 @@ function MarketView({ onBack, isAdmin }) {
         <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
       </header>
 
+      {/* שורת סינון לשוק */}
+      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(248, 250, 252, 0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e2e8f0", padding: "10px 16px" }}>
+        <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
+          <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>📦 הכל ({ads.length})</button>
+          
+          <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
+            ❤️ מועדפים ({favorites.length})
+          </button>
+          
+          {MARKET_CATEGORIES.map(cat => {
+            const count = ads.filter(a => a.category === cat).length;
+            if (count === 0) return null;
+            return (
+              <button key={cat} className={`cc ${activeCat === cat ? "act" : ""}`} onClick={() => { setActiveCat(cat); trackEvent("Category Click", "Market Filter", cat); }}>
+                {cat} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
         
         <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "12px", padding: "16px", marginBottom: "20px", color: "#1e3a8a", fontSize: "14px", lineHeight: "1.6", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
           <strong style={{ fontSize: "16px", display: "block", marginBottom: "5px" }}>👋 ברוכים הבאים ללוח היישובי!</strong>
           כאן תוכלו לפרסם חפצים למכירה, למסור ציוד בחינם, או לחפש דברים שאתם צריכים מחברים בקהילה שלנו בבאר גנים.
-          <ul style={{ paddingRight: "20px", marginTop: "8px", marginBottom: "0", color: "#1e40af" }}>
-            <li>הפרסום פתוח לכולם ובחינם לגמרי.</li>
-            <li>מומלץ להעלות תמונה ברורה לכל מודעה.</li>
-            <li>המודעות מסודרות תמיד מהכי חדש להכי ישן.</li>
-          </ul>
         </div>
 
         <button 
@@ -634,8 +686,15 @@ function MarketView({ onBack, isAdmin }) {
               <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
               אין מודעות כרגע.
             </div>
+          ) : filteredAds.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "1 / -1" }}>
+              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>{activeCat === "מועדפים" ? "🤍" : "🔍"}</span>
+              <p style={{ fontSize: 16, fontWeight: 700 }}>
+                {activeCat === "מועדפים" ? "עוד לא שמרת מודעות במועדפים" : "לא נמצאו מודעות בקטגוריה זו"}
+              </p>
+            </div>
           ) : (
-            ads.map(ad => (
+            filteredAds.map(ad => (
               <div 
                 key={ad.id} 
                 onClick={() => { setSelectedAd(ad); trackEvent("View Ad", "Market", ad.title); }} 
@@ -651,7 +710,16 @@ function MarketView({ onBack, isAdmin }) {
                       <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", marginBottom: "4px" }}>{ad.category}</span>
                       <h3 style={{ fontSize: "14px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2", margin: 0 }}>{ad.title}</h3>
                     </div>
-                    <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 6px", borderRadius: "6px", fontSize: "13px", fontWeight: "900", flexShrink: 0, marginLeft: "4px" }}>₪{ad.price}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleToggleFav(ad.id, ad.title); }} 
+                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: 0, transition: "transform 0.2s", transform: favorites.includes(ad.id) ? "scale(1.1)" : "scale(1)" }}
+                        title="שמור במועדפים"
+                      >
+                        {favorites.includes(ad.id) ? "❤️" : "🤍"}
+                      </button>
+                      <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 6px", borderRadius: "6px", fontSize: "13px", fontWeight: "900", flexShrink: 0 }}>₪{ad.price}</span>
+                    </div>
                   </div>
                   
                   <p style={{ color: "#475569", fontSize: "12px", marginTop: "4px", marginBottom: "auto", lineHeight: "1.4", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
@@ -681,17 +749,6 @@ function MarketView({ onBack, isAdmin }) {
         </div>
       </main>
 
-      <footer style={{ textAlign: "center", padding: "24px 20px", color: "#64748b", fontSize: 14, borderTop: "1px solid #e2e8f0", background: "#f1f5f9", marginTop: "auto" }}>
-        <p style={{ fontWeight: 900, color: "#0f172a", fontSize: 16 }}>שוק באר גנים</p>
-        <div style={{ marginTop: 12, fontSize: 14, color: "#475569" }}>
-          מצאתם באג? משהו לא עובד? יש לכם הצעות לשיפור?{" "}
-          <br />
-          <a href="https://wa.me/9720559139013?text=שלום יונתן, ראיתי תקלה/יש לי הצעה לשוק באר גנים:" target="_blank" rel="noreferrer" style={{ color: "#2563eb", fontWeight: 800, textDecoration: "underline", display: "inline-block", marginTop: "5px" }}>
-            לחצו כאן ושלחו לי הודעה
-          </a>
-        </div>
-      </footer>
-
       {/* חלון הצגת מודעה */}
       {selectedAd && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.85)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: "20px" }} onClick={() => setSelectedAd(null)}>
@@ -708,7 +765,15 @@ function MarketView({ onBack, isAdmin }) {
                   <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", marginBottom: "8px" }}>{selectedAd.category}</span>
                   <h2 style={{ fontSize: "24px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2" }}>{selectedAd.title}</h2>
                 </div>
-                <span style={{ background: "#dbeafe", color: "#1e40af", padding: "8px 14px", borderRadius: "10px", fontSize: "20px", fontWeight: "900", flexShrink: 0, marginLeft: "10px" }}>₪{selectedAd.price}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleToggleFav(selectedAd.id, selectedAd.title); }} 
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: 0 }}
+                  >
+                    {favorites.includes(selectedAd.id) ? "❤️" : "🤍"}
+                  </button>
+                  <span style={{ background: "#dbeafe", color: "#1e40af", padding: "8px 14px", borderRadius: "10px", fontSize: "20px", fontWeight: "900", flexShrink: 0 }}>₪{selectedAd.price}</span>
+                </div>
               </div>
               
               <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "12px", marginBottom: "20px" }}>
