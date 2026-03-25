@@ -70,7 +70,7 @@ function OpenBadge({ hours }) {
   );
 }
 
-function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit }) {
+function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit, isFavorite, onToggleFav }) {
   const cs = CATEGORIES[biz.cat] || { emoji: "🏢", color: "#c4651a", bg: "#fdf0e0" };
   
   const track = (actionName) => {
@@ -86,7 +86,18 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit
           </div>
           <h3 style={{ fontSize: 15, fontWeight: 800, color: "#1a0e06", lineHeight: 1.2, margin: 0 }}>{biz.name}</h3>
         </div>
-        <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0, marginLeft: 4 }}>▾</span>
+        
+        {/* כפתורי מועדפים והרחבה */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onToggleFav(); }} 
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: "18px", padding: 0, transition: "transform 0.2s", transform: isFavorite ? "scale(1.1)" : "scale(1)" }}
+            title="שמור במועדפים"
+          >
+            {isFavorite ? "❤️" : "🤍"}
+          </button>
+          <span style={{ fontSize: 16, color: "#c4a97d", transition: "transform .28s", transform: expanded ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>▾</span>
+        </div>
       </div>
       
       <p style={{ fontSize: 13, color: "#6b5030", marginTop: 4, marginBottom: 8, lineHeight: 1.4, display: expanded ? "block" : "-webkit-box", WebkitLineClamp: expanded ? "none" : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{biz.desc}</p>
@@ -116,7 +127,6 @@ function Card({ biz, idx, expanded, onToggle, mounted, isOwner, onDelete, onEdit
             {biz.tiktok && biz.tiktok.startsWith("http") && <a href={biz.tiktok} target="_blank" rel="noreferrer" className="ab o" onClick={e => { e.stopPropagation(); track("TikTok"); }} style={{ color: "#000", borderColor: "#ccc" }}>🎵 טיקטוק</a>}
           </div>
 
-          {/* מציג את אפשרויות העריכה והמחיקה אם אתה הבעלים או המנהל */}
           {isOwner && (
             <div style={{ marginTop: "12px", paddingTop: "8px", borderTop: "1px dashed #ecdfc8", textAlign: "left", display: "flex", gap: "8px" }}>
               <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
@@ -148,6 +158,12 @@ function BusinessesView({ onBack, isAdmin }) {
   const [editingBizId, setEditingBizId] = useState(null); 
   const [newBiz, setNewBiz] = useState({ name: "", cat: "מקצועות חופשיים", tel: "", hours: "", addr: "באר גנים", site: "", ig: "", fb: "", tiktok: "", desc: "" });
 
+  // זיכרון של המועדפים
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem("beerGanimFavs");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [deviceId] = useState(() => {
     let id = localStorage.getItem("beerGanimDeviceId");
     if (!id) {
@@ -161,6 +177,11 @@ function BusinessesView({ onBack, isAdmin }) {
     trackEvent("page_view", "Navigation", "Businesses View");
   }, []);
 
+  // שמירת מועדפים כשהם משתנים
+  useEffect(() => {
+    localStorage.setItem("beerGanimFavs", JSON.stringify(favorites));
+  }, [favorites]);
+
   useEffect(() => {
     const q = query(collection(db, "businesses"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -171,15 +192,29 @@ function BusinessesView({ onBack, isAdmin }) {
     return () => unsubscribe();
   }, []);
 
+  const handleToggleFav = (id, name) => {
+    setFavorites(prev => {
+      if (prev.includes(id)) {
+        trackEvent("Remove Favorite", "Engagement", name);
+        return prev.filter(fId => fId !== id);
+      } else {
+        trackEvent("Add Favorite", "Engagement", name);
+        return [...prev, id];
+      }
+    });
+  };
+
   const filtered = useMemo(() => {
     let baseList = businesses;
     if (activeCat === "פתוח עכשיו") baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
+    else if (activeCat === "מועדפים") baseList = baseList.filter(b => favorites.includes(b.id));
     else if (activeCat !== "הכל") baseList = baseList.filter(b => b.cat === activeCat);
+    
     const q = search.trim();
     if (!q) return baseList;
     const fuse = new Fuse(baseList, { keys: ["name", "desc", "addr", "cat"], threshold: 0.4, distance: 100 });
     return fuse.search(q).map(result => result.item);
-  }, [search, activeCat, businesses]);
+  }, [search, activeCat, businesses, favorites]);
 
   const counts = useMemo(() => {
     const c = {};
@@ -252,12 +287,16 @@ function BusinessesView({ onBack, isAdmin }) {
         .cc:hover{border-color:#c4651a;color:#c4651a}
         .cc.act{background:linear-gradient(135deg,#c4651a,#e8a24e);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(196,101,26,.32)}
         .cc.open-now { border-color: #16a34a; color: #16a34a; }
-        .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); }
+        .cc.open-now.act { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.32); border-color: transparent;}
+        .cc.fav-btn { border-color: #ef4444; color: #ef4444; }
+        .cc.fav-btn.act { background: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.32); border-color: transparent;}
         .card{background:#fff;border-radius:14px;padding:14px; border:1.5px solid #ecdfc8;transition:transform .22s,box-shadow .22s;cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;}
         .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09)}
         .ab{display:inline-flex;align-items:center;justify-content:center; gap:4px;padding:6px 12px;border-radius:50px;font-family:'Heebo',sans-serif;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;border:none; flex: 1 1 auto; text-align:center;}
         .ab.p{background:linear-gradient(135deg,#c4651a,#e8a24e);color:#fff;box-shadow:0 3px 10px rgba(196,101,26,.28)}
+        .ab.p:hover{box-shadow:0 6px 16px rgba(196,101,26,.45);transform:translateY(-1px)}
         .ab.o{background:#fff;border:1.5px solid #e8d5b7;color:#555}
+        .ab.o:hover{border-color:#c4651a;background:#fff9f4}
         .dr{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:12px}
         .fa{opacity:0;transform:translateY(12px);transition:opacity .32s ease,transform .32s ease}
         .fa.vis{opacity:1;transform:translateY(0)}
@@ -292,6 +331,12 @@ function BusinessesView({ onBack, isAdmin }) {
         
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
           <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>🏘️ הכל ({businesses.length})</button>
+          
+          {/* כפתור מועדפים חדש */}
+          <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
+            ❤️ מועדפים ({favorites.length})
+          </button>
+          
           <button className={`cc open-now ${activeCat === "פתוח עכשיו" ? "act" : ""}`} onClick={() => setActiveCat("פתוח עכשיו")}>🟢 פתוח עכשיו</button>
           {Object.entries(CATEGORIES).map(([c, { emoji }]) => counts[c] ? (
             <button key={c} className={`cc ${activeCat === c ? "act" : ""}`} onClick={() => { setActiveCat(c); trackEvent("Category Click", "Filter", c); }}>{emoji} {c} ({counts[c]})</button>
@@ -307,7 +352,12 @@ function BusinessesView({ onBack, isAdmin }) {
         {businesses.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px", color: "#b09070" }}>טוען עסקים... ⏳</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}><div style={{ fontSize: 48 }}>🔍</div><p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>לא נמצאו תוצאות לפילטר שבחרת</p></div>
+          <div style={{ textAlign: "center", padding: "64px 20px", color: "#b09070" }}>
+            <div style={{ fontSize: 48 }}>{activeCat === "מועדפים" ? "🤍" : "🔍"}</div>
+            <p style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>
+              {activeCat === "מועדפים" ? "עוד לא שמרת עסקים במועדפים" : "לא נמצאו תוצאות לפילטר שבחרת"}
+            </p>
+          </div>
         ) : (
           <div className="biz-grid">
             {filtered.map((biz, i) => (
@@ -321,6 +371,8 @@ function BusinessesView({ onBack, isAdmin }) {
                 isOwner={biz.authorId === deviceId || isAdmin} 
                 onDelete={() => handleDeleteBiz(biz.id)}
                 onEdit={() => openEditForm(biz)}
+                isFavorite={favorites.includes(biz.id)}
+                onToggleFav={() => handleToggleFav(biz.id, biz.name)}
               />
             ))}
           </div>
@@ -761,7 +813,7 @@ function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
     
     if (newClicks >= 5) {
       const pwd = prompt("הכנס קוד מנהל סודי:");
-      if (pwd === "123456") {
+      if (pwd === "2010") {
         localStorage.setItem("beerGanimAdmin", "true");
         setIsAdmin(true);
         alert("ברוך הבא! הוגדרת כמנהל המערכת. כעת תוכל למחוק ולערוך הכל.");
