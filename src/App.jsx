@@ -969,7 +969,7 @@ function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
 
       <div style={{ marginTop: "auto", textAlign: "center", paddingTop: "40px" }}>
         <p onClick={handleAdminClick} style={{ fontSize: "13px", color: "#cbd5e1", cursor: "pointer", userSelect: "none", fontWeight: "600" }}>
-          פותח באהבה ע"י יונתן יוסף {isAdmin ? "👑" : ""}
+          פותח ע"י יונתן יוסף {isAdmin ? "👑" : ""}
         </p>
       </div>
     </div>
