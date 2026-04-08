@@ -919,63 +919,66 @@ function QuickActions({ onNavigate }) {
 }
 
 
+// 3. מסך הבית המעודכן - עם לוגו היישוב
 function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
   const [clicks, setClicks] = useState(0);
 
-  useEffect(() => {
-    trackEvent("page_view", "Navigation", "Home View");
-  }, []);
-
   const handleAdminClick = () => {
-    if (isAdmin) {
-      if (window.confirm("לצאת ממצב מנהל?")) {
-        localStorage.removeItem("beerGanimAdmin");
-        setIsAdmin(false);
-      }
-      return;
-    }
-    
     const newClicks = clicks + 1;
     setClicks(newClicks);
-    
     if (newClicks >= 5) {
       const pwd = prompt("הכנס קוד מנהל סודי:");
       if (pwd === "2010") {
         localStorage.setItem("beerGanimAdmin", "true");
         setIsAdmin(true);
-        alert("ברוך הבא! הוגדרת כמנהל המערכת. כעת תוכל למחוק ולערוך הכל.");
-      } else if (pwd !== null) {
-        alert("קוד שגוי.");
+        alert("הוגדרת כמנהל.");
       }
       setClicks(0);
     }
   };
 
   return (
-    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", display: "flex", flexDirection: "column", paddingBottom: "30px" }}>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-['Heebo'] pb-10">
       
-      {/* תמונת רקע עליונה - Hero Image */}
-      <div style={{ width: "100%", height: "220px", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 50% 50%,rgba(59,130,246,.2) 0%,transparent 70%)" }} />
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: "50px", marginBottom: "8px", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.3))" }}>🏡</div>
-          <h1 style={{ fontSize: "40px", fontWeight: "900", color: "#f8fafc", letterSpacing: "-0.5px" }}>באר גנים</h1>
-          <p style={{ fontSize: "16px", color: "#94a3b8", marginTop: "4px", fontWeight: "500" }}>הפורטל הקהילתי של היישוב</p>
+      {/* 🏡 HEADER SECTION: אזור עליון נקי עם הלוגו */}
+      <div className="w-full bg-white pt-14 pb-8 flex flex-col items-center justify-center rounded-b-[2rem] shadow-sm border-b border-slate-100">
+        <img 
+          src="/logo.png" 
+          alt="לוגו באר גנים" 
+          className="h-20 md:h-24 object-contain mb-3 drop-shadow-sm"
+        />
+        <p className="text-slate-500 font-medium text-sm md:text-base">הפורטל הקהילתי של היישוב</p>
+      </div>
+
+      {/* הרכיבים שלנו */}
+      <div className="flex flex-col flex-1 z-30 pt-4">
+        <CommunityBanner />
+        <QuickActions onNavigate={onNavigate} />
+        
+        {/* כפתור למעבר ללוח העסקים המלא */}
+        <div className="w-full max-w-lg mx-auto px-4 mt-2">
+          <motion.button 
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('businesses', 'הכל')}
+            className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-4 rounded-xl shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+          >
+            <span>🌿</span> מעבר למדריך העסקים המלא
+          </motion.button>
         </div>
       </div>
 
-      <CommunityBanner />
-      <QuickActions onNavigate={onNavigate} />
-
-      <div style={{ marginTop: "auto", textAlign: "center", paddingTop: "40px" }}>
-        <p onClick={handleAdminClick} style={{ fontSize: "13px", color: "#cbd5e1", cursor: "pointer", userSelect: "none", fontWeight: "600" }}>
+      <footer className="mt-auto text-center pt-10">
+        <p 
+          onClick={handleAdminClick} 
+          className="text-xs text-slate-400 cursor-pointer font-medium select-none"
+        >
           פותח ע"י יונתן יוסף {isAdmin ? "👑" : ""}
         </p>
-      </div>
+      </footer>
     </div>
   );
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
