@@ -205,7 +205,7 @@ function BusinessesView({ onBack, isAdmin }) {
     let baseList = businesses;
     if (activeCat === "פתוח עכשיו") baseList = baseList.filter(b => getOpenStatus(b.hours) === "open");
     else if (activeCat === "מועדפים") baseList = baseList.filter(b => favorites.includes(b.id));
-    else if (activeCat === "שלי") baseList = baseList.filter(b => b.authorId === deviceId); // הצגת "העסקים שלי"
+    else if (activeCat === "שלי") baseList = baseList.filter(b => b.authorId === deviceId);
     else if (activeCat !== "הכל") baseList = baseList.filter(b => b.cat === activeCat);
     
     const q = search.trim();
@@ -271,8 +271,6 @@ function BusinessesView({ onBack, isAdmin }) {
     }
   };
 
-  const waFloat = "0559139013";
-
   return (
     <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f7f3ed", color: "#1e140a", display: "flex", flexDirection: "column" }}>
       <style>{`
@@ -300,9 +298,6 @@ function BusinessesView({ onBack, isAdmin }) {
         .fa.vis{opacity:1;transform:translateY(0)}
         @keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
         .ex{animation:fu .22s ease}
-        .wa{position:fixed;bottom:22px;left:22px;z-index:999;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(37,211,102,.5);text-decoration:none;font-size:25px;transition:transform .2s,box-shadow .2s}
-        .wa:hover{transform:scale(1.12);box-shadow:0 6px 24px rgba(37,211,102,.65)}
-        
         .biz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         @media(max-width: 950px){ .biz-grid { grid-template-columns: repeat(2, 1fr); } }
         @media(max-width: 600px){ .biz-grid { grid-template-columns: 1fr; } }
@@ -334,7 +329,6 @@ function BusinessesView({ onBack, isAdmin }) {
             ❤️ מועדפים ({favorites.length})
           </button>
 
-          {/* כפתור האזור שלי */}
           <button className={`cc my-ads-btn ${activeCat === "שלי" ? "act" : ""}`} onClick={() => setActiveCat("שלי")}>
             👤 העסקים שלי
           </button>
@@ -447,427 +441,8 @@ function BusinessesView({ onBack, isAdmin }) {
   );
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. מסך השוק - MarketView
-// ─────────────────────────────────────────────────────────────────────────────
-const MARKET_CATEGORIES = [
-  "ריהוט לבית ולגינה",
-  "חשמל ואלקטרוניקה",
-  "ספרים ולימודים",
-  "ספורט ופנאי",
-  "לתינוק ולילד",
-  "ביגוד ואקססוריז",
-  "מסירה בחינם",
-  "שונות"
-];
-
-function MarketView({ onBack, isAdmin }) {
-  const [ads, setAds] = useState([]);
-  const [activeCat, setActiveCat] = useState("הכל"); 
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [selectedAd, setSelectedAd] = useState(null); 
-  const [editingAdId, setEditingAdId] = useState(null);
-  
-  const [newAd, setNewAd] = useState({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
-
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem("beerGanimMarketFavs");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [deviceId] = useState(() => {
-    let id = localStorage.getItem("beerGanimDeviceId");
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem("beerGanimDeviceId", id);
-    }
-    return id;
-  });
-
-  useEffect(() => {
-    trackEvent("page_view", "Navigation", "Market View");
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("beerGanimMarketFavs", JSON.stringify(favorites));
-  }, [favorites]);
-
-  useEffect(() => {
-    const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const adsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setAds(adsData);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleToggleFav = (id, title) => {
-    setFavorites(prev => {
-      if (prev.includes(id)) {
-        trackEvent("Remove Market Favorite", "Engagement", title);
-        return prev.filter(fId => fId !== id);
-      } else {
-        trackEvent("Add Market Favorite", "Engagement", title);
-        return [...prev, id];
-      }
-    });
-  };
-
-  const filteredAds = useMemo(() => {
-    let baseList = ads;
-    if (activeCat === "מועדפים") {
-      baseList = baseList.filter(ad => favorites.includes(ad.id));
-    } else if (activeCat === "שלי") {
-      baseList = baseList.filter(ad => ad.authorId === deviceId); // הצגת "המודעות שלי"
-    } else if (activeCat !== "הכל") {
-      baseList = baseList.filter(ad => ad.category === activeCat);
-    }
-    return baseList;
-  }, [ads, activeCat, favorites, deviceId]);
-
-  const openEditAdForm = (ad, e) => {
-    e.stopPropagation();
-    setNewAd(ad);
-    setEditingAdId(ad.id);
-    setShowForm(true);
-  };
-
-  const closeAdForm = () => {
-    setShowForm(false);
-    setEditingAdId(null);
-    setNewAd({ title: "", category: "ריהוט לבית ולגינה", price: "", desc: "", tel: "", image: "" });
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-
-        const MAX_SIZE = 800;
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          }
-        } else {
-          if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
-        setNewAd({ ...newAd, image: compressedDataUrl });
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file); 
-  };
-
-  const handleAddAd = async (e) => {
-    e.preventDefault();
-    if (!newAd.title || !newAd.price || !newAd.tel || !newAd.desc) {
-      alert("נא למלא את כל שדות החובה");
-      return;
-    }
-
-    const cleanPhone = newAd.tel.replace(/\D/g, "");
-    if (!/^05\d{8}$/.test(cleanPhone)) {
-      alert("מספר הטלפון לא תקין. יש להזין מספר נייד בעל 10 ספרות שמתחיל ב-05.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (editingAdId) {
-        await updateDoc(doc(db, "ads", editingAdId), {
-          title: newAd.title, category: newAd.category, price: newAd.price,
-          desc: newAd.desc, tel: cleanPhone, image: newAd.image
-        });
-        trackEvent("Edit Market Ad", "Engagement", newAd.category);
-        if (selectedAd && selectedAd.id === editingAdId) {
-          setSelectedAd({...selectedAd, ...newAd, tel: cleanPhone});
-        }
-      } else {
-        await addDoc(collection(db, "ads"), {
-          title: newAd.title, category: newAd.category, price: newAd.price, desc: newAd.desc,
-          tel: cleanPhone, image: newAd.image, date: new Date().toLocaleDateString("he-IL"),
-          authorId: deviceId, createdAt: serverTimestamp()
-        });
-        trackEvent("Add Market Ad", "Engagement", newAd.category);
-      }
-      closeAdForm();
-    } catch (error) {
-      console.error("Error adding doc:", error);
-      alert("שגיאה! וודא שפתחת את מסד הנתונים בפיירבייס.");
-    }
-    setLoading(false);
-  };
-
-  const handleDeleteAd = async (id, e) => {
-    if (e) e.stopPropagation(); 
-    if (window.confirm("האם אתה בטוח שברצונך למחוק מודעה זו?")) {
-      try {
-        await deleteDoc(doc(db, "ads", id));
-        if (selectedAd && selectedAd.id === id) setSelectedAd(null); 
-      } catch (error) {
-        console.error("Error deleting doc:", error);
-        alert("שגיאה במחיקת המודעה.");
-      }
-    }
-  };
-
-  return (
-    <div style={{ fontFamily: "'Heebo',sans-serif", direction: "rtl", minHeight: "100vh", background: "#f8fafc", color: "#0f172a", display: "flex", flexDirection: "column" }}>
-      <style>{`
-        .cc{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;border:2px solid #cbd5e1;background:#fff;font-family:'Heebo',sans-serif;font-size:12px;font-weight:500;color:#475569;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
-        .cc:hover{border-color:#2563eb;color:#2563eb}
-        .cc.act{background:linear-gradient(135deg,#2563eb,#60a5fa);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.32)}
-        .cc.fav-btn { border-color: #ef4444; color: #ef4444; }
-        .cc.fav-btn.act { background: #ef4444; color: #fff; box-shadow: 0 4px 12px rgba(239,68,68,.32); border-color: transparent;}
-        .cc.my-ads-btn { border-color: #8b5cf6; color: #8b5cf6; }
-        .cc.my-ads-btn.act { background: #8b5cf6; color: #fff; box-shadow: 0 4px 12px rgba(139,92,246,.32); border-color: transparent;}
-      `}</style>
-
-      <button onClick={onBack} style={{ position: "fixed", top: 15, right: 15, zIndex: 1000, background: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontFamily: "Heebo", fontWeight: "bold", backdropFilter: "blur(8px)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-        ➔ למסך הראשי
-      </button>
-
-      <header style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)", padding: "42px 20px 30px", textAlign: "center" }}>
-        <div style={{ fontSize: 38, marginBottom: 7 }}>🛒</div>
-        <h1 style={{ fontSize: "clamp(28px,8vw,50px)", fontWeight: 900, color: "#f8fafc", letterSpacing: "-1px" }}>שוק באר גנים</h1>
-        <p style={{ color: "#94a3b8", fontSize: 15, marginTop: 5 }}>לוח המודעות של תושבי היישוב</p>
-      </header>
-
-      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(248, 250, 252, 0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #e2e8f0", padding: "10px 16px" }}>
-        <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 5, scrollbarWidth: "none", flexWrap: "nowrap" }}>
-          <button className={`cc ${activeCat === "הכל" ? "act" : ""}`} onClick={() => setActiveCat("הכל")}>📦 הכל ({ads.length})</button>
-          
-          <button className={`cc fav-btn ${activeCat === "מועדפים" ? "act" : ""}`} onClick={() => setActiveCat("מועדפים")}>
-            ❤️ מועדפים ({favorites.length})
-          </button>
-
-          {/* כפתור האזור שלי לשוק */}
-          <button className={`cc my-ads-btn ${activeCat === "שלי" ? "act" : ""}`} onClick={() => setActiveCat("שלי")}>
-            👤 המודעות שלי
-          </button>
-          
-          {MARKET_CATEGORIES.map(cat => {
-            const count = ads.filter(a => a.category === cat).length;
-            if (count === 0) return null;
-            return (
-              <button key={cat} className={`cc ${activeCat === cat ? "act" : ""}`} onClick={() => { setActiveCat(cat); trackEvent("Category Click", "Market Filter", cat); }}>
-                {cat} ({count})
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px", flex: 1, width: "100%" }}>
-        
-        <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "12px", padding: "16px", marginBottom: "20px", color: "#1e3a8a", fontSize: "14px", lineHeight: "1.6", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-          <strong style={{ fontSize: "16px", display: "block", marginBottom: "5px" }}>👋 ברוכים הבאים ללוח היישובי!</strong>
-          כאן תוכלו לפרסם חפצים למכירה, למסור ציוד בחינם, או לחפש דברים שאתם צריכים מחברים בקהילה שלנו בבאר גנים.
-        </div>
-
-        <button 
-          onClick={() => setShowForm(true)} 
-          style={{ width: "100%", padding: "15px", marginBottom: "25px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "12px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
-        >
-          + פרסם מודעה חדשה
-        </button>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-          {ads.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "1 / -1" }}>
-              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>📦</span>
-              אין מודעות כרגע.
-            </div>
-          ) : filteredAds.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", gridColumn: "1 / -1" }}>
-              <span style={{ fontSize: "30px", display: "block", marginBottom: "10px" }}>{activeCat === "מועדפים" ? "🤍" : activeCat === "שלי" ? "👤" : "🔍"}</span>
-              <p style={{ fontSize: 16, fontWeight: 700 }}>
-                {activeCat === "מועדפים" ? "עוד לא שמרת מודעות במועדפים" : activeCat === "שלי" ? "עוד לא העלית שום מודעה" : "לא נמצאו מודעות בקטגוריה זו"}
-              </p>
-            </div>
-          ) : (
-            filteredAds.map(ad => (
-              <div 
-                key={ad.id} 
-                onClick={() => { setSelectedAd(ad); trackEvent("View Ad", "Market", ad.title); }} 
-                style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.04)", cursor: "pointer", transition: "transform 0.2s", display: "flex", flexDirection: "column" }}
-              >
-                {ad.image && (
-                  <img src={ad.image} alt={ad.title} style={{ width: "100%", height: "140px", objectFit: "cover", borderBottom: "1px solid #e2e8f0" }} />
-                )}
-                
-                <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", marginBottom: "4px" }}>{ad.category}</span>
-                      <h3 style={{ fontSize: "14px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2", margin: 0 }}>{ad.title}</h3>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleToggleFav(ad.id, ad.title); }} 
-                        style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", padding: 0, transition: "transform 0.2s", transform: favorites.includes(ad.id) ? "scale(1.1)" : "scale(1)" }}
-                        title="שמור במועדפים"
-                      >
-                        {favorites.includes(ad.id) ? "❤️" : "🤍"}
-                      </button>
-                      <span style={{ background: "#dbeafe", color: "#1e40af", padding: "4px 6px", borderRadius: "6px", fontSize: "13px", fontWeight: "900", flexShrink: 0 }}>₪{ad.price}</span>
-                    </div>
-                  </div>
-                  
-                  <p style={{ color: "#475569", fontSize: "12px", marginTop: "4px", marginBottom: "auto", lineHeight: "1.4", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{ad.desc}</p>
-                  
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", borderTop: "1px solid #f1f5f9", paddingTop: "10px" }}>
-                    <a href={`https://wa.me/972${ad.tel.replace(/^0/, "")}`} onClick={e => { e.stopPropagation(); trackEvent("WhatsApp Fast", "Market", ad.title); }} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#25d366", color: "#fff", padding: "6px 12px", borderRadius: "50px", textDecoration: "none", fontSize: "12px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(37,211,102,0.3)" }}>
-                      💬 הודעה
-                    </a>
-                    
-                    {ad.authorId === deviceId || isAdmin ? (
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button onClick={(e) => openEditAdForm(ad, e)} style={{ background: "#e0f2fe", border: "none", color: "#0284c7", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
-                          ✏️ ערוך
-                        </button>
-                        <button onClick={(e) => handleDeleteAd(ad.id, e)} style={{ background: "#fee2e2", border: "none", color: "#dc2626", padding: "6px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>
-                          🗑️ מחק
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold" }}>קרא עוד ➔</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </main>
-
-      {/* חלון הצגת מודעה */}
-      {selectedAd && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.85)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: "20px" }} onClick={() => setSelectedAd(null)}>
-          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setSelectedAd(null)} style={{ position: "absolute", top: "15px", right: "15px", background: "rgba(0,0,0,0.5)", color: "#fff", border: "none", borderRadius: "50%", width: "36px", height: "36px", fontSize: "16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>✕</button>
-
-            {selectedAd.image && (
-              <img src={selectedAd.image} alt={selectedAd.title} style={{ width: "100%", maxHeight: "350px", objectFit: "contain", background: "#f1f5f9", borderTopLeftRadius: "20px", borderTopRightRadius: "20px" }} />
-            )}
-
-            <div style={{ padding: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
-                <div>
-                  <span style={{ display: "inline-block", background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", marginBottom: "8px" }}>{selectedAd.category}</span>
-                  <h2 style={{ fontSize: "24px", fontWeight: "900", color: "#0f172a", lineHeight: "1.2" }}>{selectedAd.title}</h2>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleToggleFav(selectedAd.id, selectedAd.title); }} 
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: "24px", padding: 0 }}
-                  >
-                    {favorites.includes(selectedAd.id) ? "❤️" : "🤍"}
-                  </button>
-                  <span style={{ background: "#dbeafe", color: "#1e40af", padding: "8px 14px", borderRadius: "10px", fontSize: "20px", fontWeight: "900", flexShrink: 0 }}>₪{selectedAd.price}</span>
-                </div>
-              </div>
-              
-              <div style={{ background: "#f8fafc", padding: "15px", borderRadius: "12px", marginBottom: "20px" }}>
-                <p style={{ color: "#334155", fontSize: "16px", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>{selectedAd.desc}</p>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#64748b", fontSize: "13px", marginBottom: "20px" }}>
-                <span>פורסם בתאריך: {selectedAd.date || "היום"}</span>
-                <span>מספר טלפון: {selectedAd.tel}</span>
-              </div>
-              
-              <div style={{ display: "flex", gap: "10px", flexDirection: "column" }}>
-                <a href={`https://wa.me/972${selectedAd.tel.replace(/^0/, "")}`} onClick={() => trackEvent("WhatsApp Full", "Market", selectedAd.title)} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#25d366", color: "#fff", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold", boxShadow: "0 4px 12px rgba(37,211,102,0.3)" }}>
-                  💬 שלח הודעת וואטסאפ למוכר
-                </a>
-                <a href={`tel:${selectedAd.tel}`} onClick={() => trackEvent("Call Full", "Market", selectedAd.title)} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", background: "#f1f5f9", color: "#334155", padding: "14px", borderRadius: "12px", textDecoration: "none", fontSize: "16px", fontWeight: "bold" }}>
-                  📞 התקשר למוכר
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* חלון הוספת/עריכת מודעה */}
-      {showForm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: "20px" }}>
-          <form onSubmit={handleAddAd} style={{ background: "#fff", padding: "24px", borderRadius: "20px", width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center", color: "#0f172a", fontWeight: "900" }}>{editingAdId ? "עריכת מודעה" : "פרסום מודעה חדשה"}</h2>
-            
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>כותרת המודעה *</label>
-              <input placeholder="למשל: ספרי לימוד כיתה י'" value={newAd.title} onChange={e => setNewAd({...newAd, title: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a" }} />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>קטגוריה *</label>
-                <select value={newAd.category} onChange={e => setNewAd({...newAd, category: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", backgroundColor: "#fff", color: "#0f172a" }}>
-                  {MARKET_CATEGORIES.map(cat => <option key={cat} value={cat} style={{ color: "#0f172a", backgroundColor: "#fff" }}>{cat}</option>)}
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מחיר (₪) *</label>
-                <input placeholder="למשל: 450" type="number" value={newAd.price} onChange={e => setNewAd({...newAd, price: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a" }} />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>פירוט *</label>
-              <textarea placeholder="פרט על המוצר, מצבו וכל מידע חשוב אחר..." value={newAd.desc} onChange={e => setNewAd({...newAd, desc: e.target.value})} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a", minHeight: "80px", resize: "vertical" }} />
-            </div>
-
-            <div style={{ marginBottom: "15px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>תמונה (אופציונלי)</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: "100%", padding: "10px", border: "1px dashed #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "13px", background: "#f8fafc", color: "#0f172a" }} />
-              {newAd.image && <div style={{ marginTop: "10px", textAlign: "center" }}><img src={newAd.image} alt="תצוגה מקדימה" style={{ height: "60px", borderRadius: "6px" }}/></div>}
-            </div>
-
-            <div style={{ marginBottom: "25px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "5px", color: "#475569" }}>מספר טלפון *</label>
-              <input placeholder="05XXXXXXXX" type="tel" value={newAd.tel} onChange={e => setNewAd({...newAd, tel: e.target.value})} maxLength={10} style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontFamily: "Heebo", fontSize: "15px", color: "#0f172a", direction: "ltr", textAlign: "right" }} />
-              <span style={{ fontSize: "11px", color: "#94a3b8" }}>10 ספרות, חייב להתחיל ב-05</span>
-            </div>
-            
-            <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "900", fontSize: "16px", cursor: "pointer", marginBottom: "10px", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
-              {loading ? "שומר..." : editingAdId ? "שמור שינויים" : "פרסם עכשיו בלוח"}
-            </button>
-            
-            <button type="button" onClick={closeAdForm} style={{ width: "100%", padding: "12px", background: "transparent", color: "#64748b", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
-              ביטול וחזרה
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. מסך הבית - HomeView (כולל דלת סתרים למנהל)
+// 3. מסך הבית - HomeView (כולל דלת סתרים למנהל)
 // ─────────────────────────────────────────────────────────────────────────────
 function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
   const [clicks, setClicks] = useState(0);
@@ -927,11 +502,6 @@ function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
           color: #f5e6cc;
           box-shadow: 0 10px 25px rgba(87, 48, 21, 0.2);
         }
-        .btn-market {
-          background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-          color: #f8fafc;
-          box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
-        }
       `}</style>
 
       <div style={{ textAlign: "center", marginBottom: "40px" }}>
@@ -945,12 +515,6 @@ function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
         <span style={{ fontSize: "22px", fontWeight: "800" }}>עסקים בבאר גנים</span>
       </button>
 
-      <button className="home-btn btn-market" onClick={() => onNavigate("market")}>
-        <span style={{ fontSize: "40px" }}>🛒</span>
-        <span style={{ fontSize: "22px", fontWeight: "800" }}>שוק באר גנים</span>
-        <span style={{ fontSize: "14px", color: "#94a3b8" }}>יד שניה, קהילה ומכירות</span>
-      </button>
-
       <p onClick={handleAdminClick} style={{ marginTop: "40px", fontSize: "13px", color: "#a89a8a", cursor: "pointer", userSelect: "none" }}>
         פותח ע"י יונתן יוסף {isAdmin ? "👑" : ""}
       </p>
@@ -959,7 +523,7 @@ function HomeView({ onNavigate, isAdmin, setIsAdmin }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. ניתוב ראשי - App Component
+// 4. ניתוב ראשי - App Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [currentView, setCurrentView] = useState("home"); 
@@ -976,7 +540,6 @@ export default function App() {
 
       {currentView === "home" && <HomeView onNavigate={setCurrentView} isAdmin={isAdmin} setIsAdmin={setIsAdmin} />}
       {currentView === "businesses" && <BusinessesView onBack={() => setCurrentView("home")} isAdmin={isAdmin} />}
-      {currentView === "market" && <MarketView onBack={() => setCurrentView("home")} isAdmin={isAdmin} />}
     </>
   );
 }
